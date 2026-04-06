@@ -1,3 +1,3 @@
-# flutter_shadcn
+# n8n to go (INOFFICIAL)
 
-A new Flutter project.
+
