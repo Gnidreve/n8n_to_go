@@ -78,6 +78,7 @@ class _SettingsPageState extends State<SettingsPage> {
             child: ShadInput(
               controller: _baseUrl,
               placeholder: const Text('https://your-n8n-instance.com'),
+              leading: const Icon(LucideIcons.globe),
               enabled: cfg.baseUrlEditable,
               keyboardType: TextInputType.url,
             ),
@@ -88,6 +89,7 @@ class _SettingsPageState extends State<SettingsPage> {
             child: ShadInput(
               controller: _apiKey,
               placeholder: const Text('Your n8n API key'),
+              leading: const Icon(LucideIcons.lock),
               enabled: cfg.apiKeyEditable,
               obscureText: _apiKeyObscured,
               trailing: SizedBox.square(

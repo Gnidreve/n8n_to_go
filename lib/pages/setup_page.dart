@@ -173,6 +173,7 @@ class _SetupPageState extends State<SetupPage> {
                                   placeholder: const Text(
                                     'https://your-n8n-instance.com',
                                   ),
+                                  leading: const Icon(LucideIcons.globe),
                                   keyboardType: TextInputType.url,
                                   enabled: false,
                                 ),
@@ -183,6 +184,7 @@ class _SetupPageState extends State<SetupPage> {
                                 child: ShadInput(
                                   controller: _loginEmail,
                                   placeholder: const Text('you@example.com'),
+                                  leading: const Icon(LucideIcons.mail),
                                   keyboardType: TextInputType.emailAddress,
                                   enabled: false,
                                 ),
@@ -194,6 +196,7 @@ class _SetupPageState extends State<SetupPage> {
                                   controller: _loginPassword,
                                   placeholder: const Text('Your password'),
                                   obscureText: _loginPasswordObscured,
+                                  leading: const Icon(LucideIcons.lock),
                                   trailing: _VisibilityToggle(
                                     obscured: _loginPasswordObscured,
                                     onPressed: () {
@@ -235,6 +238,7 @@ class _SetupPageState extends State<SetupPage> {
                                   placeholder: const Text(
                                     'https://your-n8n-instance.com',
                                   ),
+                                  leading: const Icon(LucideIcons.globe),
                                   keyboardType: TextInputType.url,
                                 ),
                               ),
@@ -245,6 +249,7 @@ class _SetupPageState extends State<SetupPage> {
                                   controller: _apiKey,
                                   placeholder: const Text('Your n8n API key'),
                                   obscureText: _apiKeyObscured,
+                                  leading: const Icon(LucideIcons.lock),
                                   trailing: _VisibilityToggle(
                                     obscured: _apiKeyObscured,
                                     onPressed: () {
