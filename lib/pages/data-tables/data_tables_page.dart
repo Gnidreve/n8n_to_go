@@ -1,12 +1,9 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-
-import '../../services/config_service.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../api/api.dart';
 class DataTablesPage extends StatefulWidget {
   const DataTablesPage({super.key});
 
@@ -28,16 +25,11 @@ class _DataTablesPageState extends State<DataTablesPage> {
   Future<void> _fetch() async {
     setState(() { _loading = true; _error = null; });
     try {
-      final cfg = ConfigService.instance;
-      final res = await http.get(
-        Uri.parse('${cfg.baseUrl}/api/v1/data-tables'),
-        headers: {'X-N8N-API-KEY': cfg.apiKey},
-      );
+      final res = await dataTables.getAll();
       if (!mounted) return;
-      final decoded = await compute(jsonDecode, res.body) as Map<String, dynamic>;
       setState(() {
         _loading = false;
-        _items = decoded['data'] as List<dynamic>? ?? [];
+        _items = res['data'] as List<dynamic>? ?? [];
       });
     } catch (e) {
       if (!mounted) return;

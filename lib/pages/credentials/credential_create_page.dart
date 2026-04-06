@@ -1,10 +1,7 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-import '../../services/config_service.dart';
+import '../../api/api.dart';
 import '../../widgets/credential_schema_form.dart';
 
 class CredentialCreatePage extends StatefulWidget {
@@ -43,21 +40,13 @@ class _CredentialCreatePageState extends State<CredentialCreatePage> {
     if (formState == null || formState.isLoading) return;
     setState(() => _saving = true);
     try {
-      final cfg = ConfigService.instance;
       final body = <String, dynamic>{
         'name': _name.text.trim(),
         'type': widget.credentialType,
         'isResolvable': false,
         'data': formState.getData(),
       };
-      await http.post(
-        Uri.parse('${cfg.baseUrl}/api/v1/credentials'),
-        headers: {
-          'X-N8N-API-KEY': cfg.apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(body),
-      );
+      await credentials.post(body);
       if (!mounted) return;
       ShadToaster.of(context).show(
         const ShadToast(title: Text('Credential created')),

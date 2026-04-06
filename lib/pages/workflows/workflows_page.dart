@@ -1,12 +1,7 @@
-import 'dart:convert';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-
-import '../../services/config_service.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../api/api.dart';
 import 'workflow_detail_page.dart';
 
 class WorkflowsPage extends StatefulWidget {
@@ -30,16 +25,11 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
   Future<void> _fetch() async {
     setState(() { _loading = true; _error = null; });
     try {
-      final cfg = ConfigService.instance;
-      final res = await http.get(
-        Uri.parse('${cfg.baseUrl}/api/v1/workflows'),
-        headers: {'X-N8N-API-KEY': cfg.apiKey},
-      );
+      final res = await workflows.getAll();
       if (!mounted) return;
-      final decoded = await compute(jsonDecode, res.body) as Map<String, dynamic>;
       setState(() {
         _loading = false;
-        _items = decoded['data'] as List<dynamic>? ?? [];
+        _items = res['data'] as List<dynamic>? ?? [];
       });
     } catch (e) {
       if (!mounted) return;

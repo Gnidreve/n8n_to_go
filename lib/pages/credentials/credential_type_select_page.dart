@@ -1,12 +1,8 @@
-import 'dart:convert';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../CREDENTIAL_TYPES.dart';
-import '../../services/config_service.dart';
+import '../../api/api.dart';
 import '../../widgets/credential_icon.dart';
 import 'credential_create_page.dart';
 
@@ -24,12 +20,7 @@ class _CredentialTypeSelectPageState extends State<CredentialTypeSelectPage> {
     setState(() => _loadingType = credentialType);
 
     try {
-      final cfg = ConfigService.instance;
-      final res = await http.get(
-        Uri.parse('${cfg.baseUrl}/api/v1/credentials/schema/$credentialType'),
-        headers: {'X-N8N-API-KEY': cfg.apiKey},
-      );
-      final decoded = await compute(jsonDecode, res.body) as Map<String, dynamic>;
+      final decoded = await credentials.schema.get(credentialType);
       if (!mounted) return;
 
       final reload = await Navigator.of(context).push<bool>(

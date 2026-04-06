@@ -1,10 +1,7 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-import '../../services/config_service.dart';
+import '../../api/api.dart';
 import '../../widgets/credential_schema_form.dart';
 
 class CredentialDetailPage extends StatefulWidget {
@@ -42,7 +39,6 @@ class _CredentialDetailPageState extends State<CredentialDetailPage> {
     if (formState == null || formState.isLoading) return;
     setState(() => _saving = true);
     try {
-      final cfg = ConfigService.instance;
       final data = formState.getData();
       final body = <String, dynamic>{
         'name': _name.text.trim(),
@@ -52,14 +48,7 @@ class _CredentialDetailPageState extends State<CredentialDetailPage> {
         'isPartialData': data.isEmpty,
         if (data.isNotEmpty) 'data': data,
       };
-      await http.patch(
-        Uri.parse('${cfg.baseUrl}/api/v1/credentials/$_id'),
-        headers: {
-          'X-N8N-API-KEY': cfg.apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(body),
-      );
+      await credentials.patch(_id, body);
       if (!mounted) return;
       ShadToaster.of(context).show(
         const ShadToast(title: Text('Credential saved')),
@@ -95,11 +84,7 @@ class _CredentialDetailPageState extends State<CredentialDetailPage> {
     if (confirmed != true) return;
     setState(() => _deleting = true);
     try {
-      final cfg = ConfigService.instance;
-      await http.delete(
-        Uri.parse('${cfg.baseUrl}/api/v1/credentials/$_id'),
-        headers: {'X-N8N-API-KEY': cfg.apiKey},
-      );
+      await credentials.delete(_id);
       if (!mounted) return;
       ShadToaster.of(context).show(const ShadToast(title: Text('Credential deleted')));
       Navigator.of(context).pop(true);

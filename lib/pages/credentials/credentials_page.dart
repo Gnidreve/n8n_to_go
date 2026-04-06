@@ -1,11 +1,7 @@
-import 'dart:convert';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-import '../../services/config_service.dart';
+import '../../api/api.dart';
 import '../../widgets/credential_icon.dart';
 import 'credential_detail_page.dart';
 import 'credential_type_select_page.dart';
@@ -31,16 +27,11 @@ class _CredentialsPageState extends State<CredentialsPage> {
   Future<void> _fetch() async {
     setState(() { _loading = true; _error = null; });
     try {
-      final cfg = ConfigService.instance;
-      final res = await http.get(
-        Uri.parse('${cfg.baseUrl}/api/v1/credentials?limit=100'),
-        headers: {'X-N8N-API-KEY': cfg.apiKey},
-      );
+      final res = await credentials.getAll(limit: 100);
       if (!mounted) return;
-      final decoded = await compute(jsonDecode, res.body) as Map<String, dynamic>;
       setState(() {
         _loading = false;
-        _items = decoded['data'] as List<dynamic>? ?? [];
+        _items = res['data'] as List<dynamic>? ?? [];
       });
     } catch (e) {
       if (!mounted) return;

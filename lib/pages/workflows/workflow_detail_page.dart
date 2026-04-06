@@ -1,11 +1,7 @@
-import 'dart:convert';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
 
-import '../../services/config_service.dart';
+import '../../api/api.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 class WorkflowDetailPage extends StatefulWidget {
@@ -33,23 +29,19 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
   Future<void> _fetch() async {
     setState(() { _loading = true; _error = null; });
     try {
-      final cfg = ConfigService.instance;
-      final headers = {'X-N8N-API-KEY': cfg.apiKey};
-
       final results = await Future.wait([
-        http.get(Uri.parse('${cfg.baseUrl}/api/v1/workflows/${widget.id}'), headers: headers),
-        http.get(Uri.parse('${cfg.baseUrl}/api/v1/executions?workflowId=${widget.id}'), headers: headers),
+        workflows.get(widget.id),
+        executions.getAllByWorkflowId(widget.id),
       ]);
 
       if (!mounted) return;
-
-      final workflow = await compute(jsonDecode, results[0].body) as Map<String, dynamic>;
-      final executions = await compute(jsonDecode, results[1].body) as Map<String, dynamic>;
+      final workflow = results[0];
+      final executionsResponse = results[1];
 
       setState(() {
         _loading = false;
         _workflow = workflow;
-        _executions = executions['data'] as List<dynamic>? ?? [];
+        _executions = executionsResponse['data'] as List<dynamic>? ?? [];
       });
     } catch (e) {
       if (!mounted) return;

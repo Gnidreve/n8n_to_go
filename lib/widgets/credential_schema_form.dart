@@ -1,11 +1,7 @@
-import 'dart:convert';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-import '../services/config_service.dart';
+import '../api/api.dart';
 
 class CredentialSchemaForm extends StatefulWidget {
   const CredentialSchemaForm({
@@ -78,12 +74,7 @@ class CredentialSchemaFormState extends State<CredentialSchemaForm> {
       _error = null;
     });
     try {
-      final cfg = ConfigService.instance;
-      final res = await http.get(
-        Uri.parse('${cfg.baseUrl}/api/v1/credentials/schema/${widget.credentialType}'),
-        headers: {'X-N8N-API-KEY': cfg.apiKey},
-      );
-      final decoded = await compute(jsonDecode, res.body) as Map<String, dynamic>;
+      final decoded = await credentials.schema.get(widget.credentialType);
       _applySchema(decoded);
     } catch (e) {
       setState(() {
