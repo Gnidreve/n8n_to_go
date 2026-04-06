@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import 'data_table_create_page.dart';
 import 'data_table_detail_page.dart';
 class DataTablesPage extends StatefulWidget {
   const DataTablesPage({super.key});
@@ -67,6 +68,21 @@ class _DataTablesPageState extends State<DataTablesPage> {
           icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.plus),
+            onPressed: () async {
+              final reload = await Navigator.of(context).push<bool>(
+                MaterialPageRoute(
+                  builder: (_) => const DataTableCreatePage(),
+                ),
+              );
+              if (reload == true) {
+                await _fetch();
+              }
+            },
+          ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

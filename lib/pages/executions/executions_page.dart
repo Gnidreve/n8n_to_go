@@ -197,13 +197,14 @@ class _ExecutionsPageState extends State<ExecutionsPage> {
                                 ),
                               ),
                             ),
-                            const Padding(
-                              padding: EdgeInsets.only(right: 14),
-                              child: Icon(
-                                LucideIcons.refreshCw,
-                                size: 16,
+                            if (isError)
+                              const Padding(
+                                padding: EdgeInsets.only(right: 20),
+                                child: Icon(
+                                  LucideIcons.refreshCw,
+                                  size: 18,
+                                ),
                               ),
-                            ),
                           ],
                         ),
                       );

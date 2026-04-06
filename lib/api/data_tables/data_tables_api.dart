@@ -1,5 +1,6 @@
 import 'get.dart';
 import 'get_all.dart';
+import 'post.dart';
 import 'rows/rows_api.dart';
 
 class DataTablesApi {
@@ -13,5 +14,15 @@ class DataTablesApi {
 
   Future<Map<String, dynamic>> getAll() {
     return getAllDataTables();
+  }
+
+  Future<Map<String, dynamic>> post({
+    required String name,
+    required List<Map<String, dynamic>> columns,
+  }) {
+    return postDataTable(
+      name: name,
+      columns: columns,
+    );
   }
 }

@@ -200,7 +200,6 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
       );
     }
 
-    final theme = ShadTheme.of(context);
     final labels = _columnLabels;
     final rows = _tableRows;
     final sourceRows = _rows;
@@ -233,66 +232,33 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          ShadCard(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  LucideIcons.table,
-                  size: 18,
-                  color: theme.colorScheme.mutedForeground,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '$_rowCount rows | $_columnCount columns',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: theme.colorScheme.mutedForeground,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (labels.isEmpty)
-            const ShadCard(
-              title: Text('Table preview'),
-              child: Padding(
-                padding: EdgeInsets.only(top: 16),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('No columns available'),
+      body: SafeArea(
+        top: false,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                '$_rowCount rows | $_columnCount columns',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: ShadTheme.of(context).colorScheme.mutedForeground,
                 ),
               ),
-            )
-          else
-            ShadCard(
-              title: const Text('Table preview'),
-              description: const Text('Read-only table view'),
-              child: Padding(
-                padding: const EdgeInsets.only(top: 16),
+            ),
+            if (labels.isEmpty)
+              const ShadCard(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('No columns available'),
+                  ),
+                ),
+              )
+            else
+              ShadCard(
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: ConstrainedBox(
@@ -333,7 +299,8 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
                                         child: GestureDetector(
                                           behavior: HitTestBehavior.opaque,
                                           onTap: () async {
-                                            final reload = await Navigator.of(context).push<bool>(
+                                            final reload =
+                                                await Navigator.of(context).push<bool>(
                                               MaterialPageRoute(
                                                 builder: (_) => DataTableRowFormPage(
                                                   title: 'Edit row',
@@ -348,7 +315,9 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
                                             if (reload == true) await _fetch();
                                           },
                                           child: Padding(
-                                            padding: const EdgeInsets.symmetric(vertical: 2),
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 2,
+                                            ),
                                             child: Text(
                                               value,
                                               textAlign: TextAlign.right,
@@ -364,8 +333,8 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
