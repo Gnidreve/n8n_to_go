@@ -20,16 +20,17 @@ class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   static final _items = [
-    (title: 'Workflows',   icon: LucideIcons.workflow, route: WorkflowsPage.new),
-    (title: 'Executions',  icon: LucideIcons.bolt,     route: ExecutionsPage.new),
-    (title: 'Data Tables', icon: LucideIcons.table,    route: DataTablesPage.new),
+    (title: 'Audit', icon: LucideIcons.shieldCheck, route: null),
+    (title: 'Workflows', icon: LucideIcons.workflow, route: WorkflowsPage.new),
+    (title: 'Executions', icon: LucideIcons.bolt, route: ExecutionsPage.new),
+    (title: 'Data Tables', icon: LucideIcons.table, route: DataTablesPage.new),
     (title: 'Credentials', icon: LucideIcons.keyRound, route: CredentialsPage.new),
+    (title: 'Users', icon: LucideIcons.users, route: null),
+    (title: 'Settings', icon: LucideIcons.settings, route: SettingsPage.new),
   ];
 
   @override
   Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -43,34 +44,86 @@ class HomePage extends StatelessWidget {
           ),
         ],
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: 1,
-        separatorBuilder: (_, _) => const SizedBox.shrink(),
-        itemBuilder: (context, _) => Card(
-          clipBehavior: Clip.antiAlias,
+      body: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              for (var i = 0; i < _items.length; i++) ...[
-                InkWell(
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => _items[i].route()),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    child: Row(
-                      children: [
-                        Icon(_items[i].icon, size: 24),
-                        const SizedBox(width: 16),
-                        Text(_items[i].title, style: theme.textTheme.h4),
-                        const Spacer(),
-                        const Icon(LucideIcons.chevronRight, size: 18),
-                      ],
-                    ),
+              for (final item in _items) ...[
+                _HomeMenuCard(
+                  title: item.title,
+                  icon: item.icon,
+                  onTap: item.route == null
+                      ? null
+                      : () {
+                          final route = item.route!;
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => route()),
+                          );
+                        },
+                ),
+                if (item != _items.last) const SizedBox(height: 12),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeMenuCard extends StatelessWidget {
+  const _HomeMenuCard({
+    required this.title,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String title;
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+
+    return ShadCard(
+      padding: EdgeInsets.zero,
+      child: InkWell(
+        borderRadius: theme.radius,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: onTap == null
+                    ? theme.colorScheme.mutedForeground
+                    : theme.colorScheme.foreground,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: onTap == null
+                        ? theme.colorScheme.mutedForeground
+                        : theme.colorScheme.foreground,
                   ),
                 ),
-                if (i < _items.length - 1) const Divider(height: 1),
-              ],
+              ),
+              Icon(
+                LucideIcons.chevronRight,
+                size: 18,
+                color: onTap == null
+                    ? theme.colorScheme.mutedForeground
+                    : theme.colorScheme.foreground,
+              ),
             ],
           ),
         ),
