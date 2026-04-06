@@ -1,0 +1,209 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+
+import '../../services/config_service.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
+
+class WorkflowDetailPage extends StatefulWidget {
+  const WorkflowDetailPage({super.key, required this.id, required this.name});
+
+  final String id;
+  final String name;
+
+  @override
+  State<WorkflowDetailPage> createState() => _WorkflowDetailPageState();
+}
+
+class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
+  bool _loading = true;
+  String? _error;
+  Map<String, dynamic>? _workflow;
+  List<dynamic> _executions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  Future<void> _fetch() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final cfg = ConfigService.instance;
+      final headers = {'X-N8N-API-KEY': cfg.apiKey};
+
+      final results = await Future.wait([
+        http.get(Uri.parse('${cfg.baseUrl}/api/v1/workflows/${widget.id}'), headers: headers),
+        http.get(Uri.parse('${cfg.baseUrl}/api/v1/executions?workflowId=${widget.id}'), headers: headers),
+      ]);
+
+      if (!mounted) return;
+
+      final workflow = await compute(jsonDecode, results[0].body) as Map<String, dynamic>;
+      final executions = await compute(jsonDecode, results[1].body) as Map<String, dynamic>;
+
+      setState(() {
+        _loading = false;
+        _workflow = workflow;
+        _executions = executions['data'] as List<dynamic>? ?? [];
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() { _loading = false; _error = e.toString(); });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final w = _workflow;
+
+    return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        title: Text(widget.name),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text('Error: $_error'),
+                )
+              : ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    _CopyRow('Workflow ID', w!['id'] as String? ?? '—'),
+                    _StatusRow(active: w['active'] == true),
+                    _Row('Archived', w['isArchived'] == true ? 'Yes' : 'No'),
+                    _Row('Trigger count', '${w['triggerCount'] ?? 0}'),
+                    _Row('Execution order', w['settings']?['executionOrder'] ?? '—'),
+                    _Row('Created', w['createdAt'] ?? '—'),
+                    _Row('Updated', w['updatedAt'] ?? '—'),
+                    if ((w['tags'] as List?)?.isNotEmpty == true)
+                      _Row('Tags', (w['tags'] as List).map((t) => t['name']).join(', ')),
+                    const SizedBox(height: 24),
+                    const Text('Executions', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                    const SizedBox(height: 8),
+                    if (_executions.isEmpty)
+                      const Text('No executions')
+                    else
+                      ..._executions.map((e) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: _Row(
+                          e['status'] ?? '—',
+                          e['startedAt'] ?? '—',
+                        ),
+                      )),
+                  ],
+                ),
+    );
+  }
+}
+
+class _CopyRow extends StatelessWidget {
+  const _CopyRow(this.label, this.value);
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 140,
+            child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+          ),
+          Expanded(
+            child: ShadButton.outline(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: value));
+                ShadToaster.of(context).show(
+                  const ShadToast(title: Text('Copied to clipboard')),
+                );
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 8,
+                children: [
+                  Flexible(
+                    child: Text(
+                      value,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const Icon(Icons.copy, size: 14),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusRow extends StatelessWidget {
+  const _StatusRow({required this.active});
+
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          const SizedBox(
+            width: 140,
+            child: Text('Status', style: TextStyle(fontWeight: FontWeight.w600)),
+          ),
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: active ? const Color(0xFF22c55e) : const Color(0xFF71717a),
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(active ? 'Published' : 'Inactive'),
+        ],
+      ),
+    );
+  }
+}
+
+class _Row extends StatelessWidget {
+  const _Row(this.label, this.value);
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 140,
+            child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+          ),
+          Expanded(child: Text(value)),
+        ],
+      ),
+    );
+  }
+}

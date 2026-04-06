@@ -1,5 +1,5 @@
-name: Pause
-description: "Life's Dashboard"
+name: n8n_to_go
+description: "n8n to go is a mobile application that allows you to access and manage your n8n workflows on the go. With n8n to go, you can easily monitor and control your n8n instances from your smartphone, ensuring that your automation processes are always within reach."
 publish_to: "none"
 version: 0.1.0+1
 
@@ -10,9 +10,11 @@ dependencies:
    flutter:
       sdk: flutter
    flutter_dotenv: ^6.0.0
+   flutter_secure_storage: ^9.2.4
+   shared_preferences: ^2.3.0
    google_fonts: ^8.0.2
+   http: ^1.2.0
    shadcn_ui: ^0.52.1
-   supabase_flutter: ^2.12.0
 
 dev_dependencies:
    flutter_test:
@@ -23,19 +25,23 @@ dev_dependencies:
 
 flutter_native_splash:
    color: "#ffffff"
-   image: icon.png
+   image: lib/assets/app-logo.png
    android: true
    ios: false
    android_12:
       color: "#ffffff"
-      image: icon.png
+      image: lib/assets/app-logo.png
 
 flutter_launcher_icons:
    android: true
    ios: false
-   image_path: "icon.png"
+   image_path: "lib/assets/app-logo.png"
 
 flutter:
    uses-material-design: true
    assets:
       - .env
+      - lib/assets/app-logo.png
+      - lib/assets/appbar-logo.svg
+      - lib/assets/credentials/
+      - lib/assets/splash-screem.svg
