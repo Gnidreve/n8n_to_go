@@ -33,6 +33,21 @@ class ApiClient {
     return _decodeMap(response.body);
   }
 
+  Future<int> postStatus(
+    String path, {
+    Map<String, dynamic>? body,
+    required String baseUrl,
+    required String apiKey,
+  }) async {
+    final response = await http.post(
+      _buildUri(path, baseUrl: baseUrl),
+      headers: _headers(withJson: true, apiKey: apiKey),
+      body: jsonEncode(body ?? const {}),
+    );
+
+    return response.statusCode;
+  }
+
   Future<Map<String, dynamic>> patch(
     String path, {
     Map<String, dynamic>? body,
@@ -59,9 +74,11 @@ class ApiClient {
   Uri _buildUri(
     String path, {
     Map<String, dynamic>? queryParameters,
+    String? baseUrl,
   }) {
     final cfg = ConfigService.instance;
     final normalizedPath = path.startsWith('/') ? path : '/$path';
+    final resolvedBaseUrl = (baseUrl ?? cfg.baseUrl).replaceAll(RegExp(r'/$'), '');
     final filteredQuery = queryParameters == null
         ? null
         : <String, String>{
@@ -69,16 +86,19 @@ class ApiClient {
               if (entry.value != null) entry.key: '${entry.value}',
           };
 
-    return Uri.parse('${cfg.baseUrl}/api/v1$normalizedPath').replace(
+    return Uri.parse('$resolvedBaseUrl/api/v1$normalizedPath').replace(
       queryParameters: filteredQuery?.isEmpty == true ? null : filteredQuery,
     );
   }
 
-  Map<String, String> _headers({bool withJson = false}) {
+  Map<String, String> _headers({
+    bool withJson = false,
+    String? apiKey,
+  }) {
     final cfg = ConfigService.instance;
 
     return {
-      'X-N8N-API-KEY': cfg.apiKey,
+      'X-N8N-API-KEY': apiKey ?? cfg.apiKey,
       if (withJson) 'Content-Type': 'application/json',
     };
   }

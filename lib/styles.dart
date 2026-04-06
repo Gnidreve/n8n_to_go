@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-const _brandPrimary = Color(0xFFFF6F5C);
+const _brandPrimary = Color(0xFFFF4B33);
 const _brandPrimaryForeground = Color(0xFF171717);
 const _lightBackground = Color(0xFFFCFCFC);
 const _lightCard = Color(0xFFFFFFFF);

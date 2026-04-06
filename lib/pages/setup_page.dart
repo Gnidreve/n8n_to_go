@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../api/api.dart';
 import '../services/config_service.dart';
 import 'home_page.dart';
 
@@ -32,7 +33,10 @@ class _SetupPageState extends State<SetupPage> {
   }
 
   Future<void> _save() async {
-    if (_baseUrl.text.trim().isEmpty || _apiKey.text.trim().isEmpty) {
+    final normalizedBaseUrl = _normalizeBaseUrl(_baseUrl.text);
+    final apiKey = _apiKey.text.trim();
+
+    if (normalizedBaseUrl.isEmpty || apiKey.isEmpty) {
       ShadToaster.of(context).show(
         const ShadToast.destructive(
           title: Text('Please fill in both fields'),
@@ -40,16 +44,87 @@ class _SetupPageState extends State<SetupPage> {
       );
       return;
     }
+
+    final baseUrlError = _validateBaseUrl(normalizedBaseUrl);
+    if (baseUrlError != null) {
+      ShadToaster.of(context).show(
+        ShadToast.destructive(
+          title: const Text('Invalid base URL'),
+          description: Text(baseUrlError),
+        ),
+      );
+      return;
+    }
+
     setState(() => _saving = true);
-    await ConfigService.instance.save(
-      baseUrl: _baseUrl.text.trim(),
-      apiKey: _apiKey.text.trim(),
-    );
-    if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const HomePage()),
-      (_) => false,
-    );
+    try {
+      final statusCode = await audit.post(
+        baseUrl: normalizedBaseUrl,
+        apiKey: apiKey,
+      );
+
+      if (!mounted) return;
+
+      if (statusCode < 200 || statusCode >= 300) {
+        setState(() => _saving = false);
+        ShadToaster.of(context).show(
+          ShadToast.destructive(
+            title: const Text('Connection failed'),
+            description: Text(_auditErrorMessage(statusCode)),
+          ),
+        );
+        return;
+      }
+
+      await ConfigService.instance.save(
+        baseUrl: normalizedBaseUrl,
+        apiKey: apiKey,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const HomePage()),
+        (_) => false,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ShadToaster.of(context).show(
+        const ShadToast.destructive(
+          title: Text('Connection failed'),
+          description: Text(
+            'Could not validate your n8n instance. Check the URL, API key, and network connection.',
+          ),
+        ),
+      );
+    }
+  }
+
+  String _normalizeBaseUrl(String value) {
+    return value.trim().replaceAll(RegExp(r'/$'), '');
+  }
+
+  String? _validateBaseUrl(String value) {
+    final uri = Uri.tryParse(value);
+    if (uri == null || uri.host.isEmpty) {
+      return 'Enter a valid URL.';
+    }
+    if (uri.scheme != 'http' && uri.scheme != 'https') {
+      return 'URL must start with http:// or https://.';
+    }
+    return null;
+  }
+
+  String _auditErrorMessage(int statusCode) {
+    if (statusCode == 401 || statusCode == 403) {
+      return 'The server rejected the API key.';
+    }
+    if (statusCode == 404) {
+      return 'The n8n API endpoint could not be found.';
+    }
+    if (statusCode >= 500) {
+      return 'The n8n server returned an internal error.';
+    }
+    return 'The n8n server did not confirm the connection.';
   }
 
   @override
