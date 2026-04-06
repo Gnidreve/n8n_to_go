@@ -26,7 +26,7 @@ class ConfigService {
 
     // Secure storage takes priority over .env
     _baseUrl = _baseUrlFromStorage
-        ? _migrateStoredBaseUrl(
+        ? await _migrateStoredBaseUrl(
             storedBase!,
             envBaseUrl,
             envBasePort,
@@ -83,11 +83,11 @@ class ConfigService {
     _apiKeyFromStorage = false;
   }
 
-  String _migrateStoredBaseUrl(
+  Future<String> _migrateStoredBaseUrl(
     String storedBaseUrl,
     String? envBaseUrl,
     String? envBasePort,
-  ) {
+  ) async {
     final normalizedStoredBaseUrl =
         storedBaseUrl.trim().replaceAll(RegExp(r'/$'), '');
     if (normalizedStoredBaseUrl.isEmpty) return normalizedStoredBaseUrl;
@@ -114,7 +114,7 @@ class ConfigService {
 
     final migratedBaseUrl = _composeBaseUrl(normalizedStoredBaseUrl, envBasePort);
     if (migratedBaseUrl != normalizedStoredBaseUrl) {
-      _storage.write(key: _keyBaseUrl, value: migratedBaseUrl);
+      await _storage.write(key: _keyBaseUrl, value: migratedBaseUrl);
       return migratedBaseUrl;
     }
 

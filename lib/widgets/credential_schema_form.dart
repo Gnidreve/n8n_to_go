@@ -18,6 +18,9 @@ class CredentialSchemaForm extends StatefulWidget {
 }
 
 class CredentialSchemaFormState extends State<CredentialSchemaForm> {
+  static final _camelCasePattern = RegExp(r'([a-z0-9])([A-Z])');
+  static final _wordSeparatorPattern = RegExp(r'[_\s]+');
+  static final _optionSeparatorPattern = RegExp(r'[_\s-]+');
   bool _loading = true;
   String? _error;
   Map<String, dynamic> _properties = {};
@@ -250,10 +253,10 @@ class CredentialSchemaFormState extends State<CredentialSchemaForm> {
   String _labelForField(String key) {
     final words = key
         .replaceAllMapped(
-          RegExp(r'([a-z0-9])([A-Z])'),
+          _camelCasePattern,
           (match) => '${match.group(1)} ${match.group(2)}',
         )
-        .split(RegExp(r'[_\s]+'))
+        .split(_wordSeparatorPattern)
         .where((word) => word.isNotEmpty)
         .map((word) {
           final lower = word.toLowerCase();
@@ -267,7 +270,7 @@ class CredentialSchemaFormState extends State<CredentialSchemaForm> {
 
   String _optionLabel(String value) {
     return value
-        .split(RegExp(r'[_\s-]+'))
+        .split(_optionSeparatorPattern)
         .where((part) => part.isNotEmpty)
         .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
         .join(' ');

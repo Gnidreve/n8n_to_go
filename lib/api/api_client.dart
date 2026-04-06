@@ -8,15 +8,20 @@ import '../services/config_service.dart';
 class ApiClient {
   const ApiClient();
 
+  static const _timeout = Duration(seconds: 15);
+
   Future<Map<String, dynamic>> get(
     String path, {
     Map<String, dynamic>? queryParameters,
   }) async {
-    final response = await http.get(
-      _buildUri(path, queryParameters: queryParameters),
-      headers: _headers(),
-    );
+    final response = await http
+        .get(
+          _buildUri(path, queryParameters: queryParameters),
+          headers: _headers(),
+        )
+        .timeout(_timeout);
 
+    _assertOk(response.statusCode);
     return _decodeMap(response.body);
   }
 
@@ -24,12 +29,15 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
   }) async {
-    final response = await http.post(
-      _buildUri(path),
-      headers: _headers(withJson: true),
-      body: jsonEncode(body ?? const {}),
-    );
+    final response = await http
+        .post(
+          _buildUri(path),
+          headers: _headers(withJson: true),
+          body: jsonEncode(body ?? const {}),
+        )
+        .timeout(_timeout);
 
+    _assertOk(response.statusCode);
     return _decodeMap(response.body);
   }
 
@@ -39,11 +47,13 @@ class ApiClient {
     required String baseUrl,
     required String apiKey,
   }) async {
-    final response = await http.post(
-      _buildUri(path, baseUrl: baseUrl),
-      headers: _headers(withJson: true, apiKey: apiKey),
-      body: jsonEncode(body ?? const {}),
-    );
+    final response = await http
+        .post(
+          _buildUri(path, baseUrl: baseUrl),
+          headers: _headers(withJson: true, apiKey: apiKey),
+          body: jsonEncode(body ?? const {}),
+        )
+        .timeout(_timeout);
 
     return response.statusCode;
   }
@@ -52,12 +62,15 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
   }) async {
-    final response = await http.patch(
-      _buildUri(path),
-      headers: _headers(withJson: true),
-      body: jsonEncode(body ?? const {}),
-    );
+    final response = await http
+        .patch(
+          _buildUri(path),
+          headers: _headers(withJson: true),
+          body: jsonEncode(body ?? const {}),
+        )
+        .timeout(_timeout);
 
+    _assertOk(response.statusCode);
     return _decodeMap(response.body);
   }
 
@@ -65,10 +78,20 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? queryParameters,
   }) async {
-    await http.delete(
-      _buildUri(path, queryParameters: queryParameters),
-      headers: _headers(),
-    );
+    final response = await http
+        .delete(
+          _buildUri(path, queryParameters: queryParameters),
+          headers: _headers(),
+        )
+        .timeout(_timeout);
+
+    _assertOk(response.statusCode);
+  }
+
+  void _assertOk(int statusCode) {
+    if (statusCode < 200 || statusCode >= 300) {
+      throw Exception('HTTP $statusCode');
+    }
   }
 
   Uri _buildUri(

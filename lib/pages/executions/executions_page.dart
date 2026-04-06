@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../utils/execution_formatters.dart';
 class ExecutionsPage extends StatefulWidget {
   const ExecutionsPage({super.key});
 
@@ -33,69 +34,6 @@ class _ExecutionsPageState extends State<ExecutionsPage> {
       if (!mounted) return;
       setState(() { _loading = false; _error = e.toString(); });
     }
-  }
-
-  DateTime? _parseDate(dynamic value) {
-    if (value is! String || value.isEmpty) return null;
-    return DateTime.tryParse(value)?.toLocal();
-  }
-
-  String _formatDateTime(DateTime? value) {
-    if (value == null) return 'Unknown date';
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    final month = months[value.month - 1];
-    final day = value.day;
-    final hour = value.hour.toString().padLeft(2, '0');
-    final minute = value.minute.toString().padLeft(2, '0');
-    final second = value.second.toString().padLeft(2, '0');
-    return '$month $day, $hour:$minute:$second';
-  }
-
-  bool _isError(Map<String, dynamic> item) {
-    final raw = (item['status'] ?? '').toString().toLowerCase();
-    return raw.contains('error') || raw.contains('fail');
-  }
-
-  String _statusLabel(Map<String, dynamic> item) {
-    final raw = (item['status'] ?? '').toString();
-    if (raw.isEmpty) return 'Unknown';
-    return raw[0].toUpperCase() + raw.substring(1);
-  }
-
-  String _durationLabel(Map<String, dynamic> item) {
-    final explicit = item['runTime'] ?? item['duration'] ?? item['executionTime'];
-    if (explicit is num) {
-      final seconds = explicit >= 1000 ? explicit / 1000 : explicit.toDouble();
-      return _formatSeconds(seconds);
-    }
-
-    final startedAt = _parseDate(item['startedAt']);
-    final stoppedAt = _parseDate(item['stoppedAt'] ?? item['finishedAt']);
-    if (startedAt != null && stoppedAt != null) {
-      final seconds = stoppedAt.difference(startedAt).inMilliseconds / 1000;
-      return _formatSeconds(seconds);
-    }
-
-    return '—';
-  }
-
-  String _formatSeconds(double seconds) {
-    if (seconds >= 10) return '${seconds.toStringAsFixed(2)}s';
-    if (seconds >= 1) return '${seconds.toStringAsFixed(3)}s';
-    return '${seconds.toStringAsFixed(0)}ms';
   }
 
   @override
@@ -132,10 +70,10 @@ class _ExecutionsPageState extends State<ExecutionsPage> {
                     itemBuilder: (context, i) {
                       if (_items.isEmpty) return const Text('No executions');
                       final item = Map<String, dynamic>.from(_items[i] as Map);
-                      final startedAt = _parseDate(
+                      final startedAt = parseExecutionDate(
                         item['startedAt'] ?? item['createdAt'],
                       );
-                      final isError = _isError(item);
+                      final isError = isExecutionError(item);
                       final accent = isError
                           ? const Color(0xFFF87171)
                           : const Color(0xFF86EFAC);
@@ -165,7 +103,7 @@ class _ExecutionsPageState extends State<ExecutionsPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      _formatDateTime(startedAt),
+                                      formatExecutionDateTime(startedAt),
                                       style: const TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
@@ -176,7 +114,7 @@ class _ExecutionsPageState extends State<ExecutionsPage> {
                                       TextSpan(
                                         children: [
                                           TextSpan(
-                                            text: _statusLabel(item),
+                                            text: executionStatusLabel(item),
                                             style: TextStyle(
                                               color: isError
                                                   ? const Color(0xFFF87171)
@@ -185,7 +123,7 @@ class _ExecutionsPageState extends State<ExecutionsPage> {
                                             ),
                                           ),
                                           TextSpan(
-                                            text: ' in ${_durationLabel(item)}',
+                                            text: ' in ${executionDurationLabel(item)}',
                                             style: TextStyle(
                                               color: theme.colorScheme.mutedForeground,
                                             ),

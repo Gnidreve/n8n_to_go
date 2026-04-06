@@ -140,7 +140,7 @@ class _CredentialsPageState extends State<CredentialsPage> {
                             child: Text('No credentials'),
                           );
                         }
-                        final item = filteredItems[i - 1] as Map<String, dynamic>;
+                        final item = Map<String, dynamic>.from(filteredItems[i - 1] as Map);
                         final name = item['name'] as String? ?? '—';
                         final type = item['type'] as String?;
                         return ListTile(

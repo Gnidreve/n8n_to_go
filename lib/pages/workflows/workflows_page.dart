@@ -117,7 +117,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
                         emptyLabel: 'No workflow statuses found',
                       );
                     }
-                    final item = filteredItems[i - 1] as Map<String, dynamic>;
+                    final item = Map<String, dynamic>.from(filteredItems[i - 1] as Map);
                     final name = item['name'] as String? ?? 'Workflow';
                     final description = item['description'] as String?;
                     return Card(

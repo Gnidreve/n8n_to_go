@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../api/api.dart';
+import '../../utils/execution_formatters.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 class WorkflowDetailPage extends StatefulWidget {
@@ -14,11 +15,25 @@ class WorkflowDetailPage extends StatefulWidget {
   State<WorkflowDetailPage> createState() => _WorkflowDetailPageState();
 }
 
+class _ExecutionRow {
+  const _ExecutionRow({
+    required this.startedAtFormatted,
+    required this.isError,
+    required this.statusLabel,
+    required this.durationLabel,
+  });
+
+  final String startedAtFormatted;
+  final bool isError;
+  final String statusLabel;
+  final String durationLabel;
+}
+
 class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
   bool _loading = true;
   String? _error;
   Map<String, dynamic>? _workflow;
-  List<dynamic> _executions = [];
+  List<_ExecutionRow> _executions = [];
 
   @override
   void initState() {
@@ -38,78 +53,28 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
       final workflow = results[0];
       final executionsResponse = results[1];
 
+      final rawExecutions =
+          executionsResponse['data'] as List<dynamic>? ?? [];
+      final executionRows = rawExecutions.map((e) {
+        final item = Map<String, dynamic>.from(e as Map);
+        final startedAt = parseExecutionDate(item['startedAt'] ?? item['createdAt']);
+        return _ExecutionRow(
+          startedAtFormatted: formatExecutionDateTime(startedAt),
+          isError: isExecutionError(item),
+          statusLabel: executionStatusLabel(item),
+          durationLabel: executionDurationLabel(item),
+        );
+      }).toList();
+
       setState(() {
         _loading = false;
         _workflow = workflow;
-        _executions = executionsResponse['data'] as List<dynamic>? ?? [];
+        _executions = executionRows;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() { _loading = false; _error = e.toString(); });
     }
-  }
-
-  DateTime? _parseDate(dynamic value) {
-    if (value is! String || value.isEmpty) return null;
-    return DateTime.tryParse(value)?.toLocal();
-  }
-
-  String _formatDateTime(DateTime? value) {
-    if (value == null) return 'Unknown date';
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    final month = months[value.month - 1];
-    final day = value.day;
-    final hour = value.hour.toString().padLeft(2, '0');
-    final minute = value.minute.toString().padLeft(2, '0');
-    final second = value.second.toString().padLeft(2, '0');
-    return '$month $day, $hour:$minute:$second';
-  }
-
-  bool _isError(Map<String, dynamic> item) {
-    final raw = (item['status'] ?? '').toString().toLowerCase();
-    return raw.contains('error') || raw.contains('fail');
-  }
-
-  String _statusLabel(Map<String, dynamic> item) {
-    final raw = (item['status'] ?? '').toString();
-    if (raw.isEmpty) return 'Unknown';
-    return raw[0].toUpperCase() + raw.substring(1);
-  }
-
-  String _durationLabel(Map<String, dynamic> item) {
-    final explicit = item['runTime'] ?? item['duration'] ?? item['executionTime'];
-    if (explicit is num) {
-      final seconds = explicit >= 1000 ? explicit / 1000 : explicit.toDouble();
-      return _formatSeconds(seconds);
-    }
-
-    final startedAt = _parseDate(item['startedAt']);
-    final stoppedAt = _parseDate(item['stoppedAt'] ?? item['finishedAt']);
-    if (startedAt != null && stoppedAt != null) {
-      final seconds = stoppedAt.difference(startedAt).inMilliseconds / 1000;
-      return _formatSeconds(seconds);
-    }
-
-    return '—';
-  }
-
-  String _formatSeconds(double seconds) {
-    if (seconds >= 10) return '${seconds.toStringAsFixed(2)}s';
-    if (seconds >= 1) return '${seconds.toStringAsFixed(3)}s';
-    return '${seconds.toStringAsFixed(0)}ms';
   }
 
   @override
@@ -183,13 +148,8 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
                                 )
                               else
                                 ..._executions.map(
-                                  (e) {
-                                    final item = Map<String, dynamic>.from(e as Map);
-                                    final startedAt = _parseDate(
-                                      item['startedAt'] ?? item['createdAt'],
-                                    );
-                                    final isError = _isError(item);
-                                    final accent = isError
+                                  (row) {
+                                    final accent = row.isError
                                         ? const Color(0xFFF87171)
                                         : const Color(0xFF86EFAC);
 
@@ -221,7 +181,7 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
                                                       CrossAxisAlignment.start,
                                                   children: [
                                                     Text(
-                                                      _formatDateTime(startedAt),
+                                                      row.startedAtFormatted,
                                                       style: const TextStyle(
                                                         fontSize: 15,
                                                         fontWeight: FontWeight.w600,
@@ -232,9 +192,9 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
                                                       TextSpan(
                                                         children: [
                                                           TextSpan(
-                                                            text: _statusLabel(item),
+                                                            text: row.statusLabel,
                                                             style: TextStyle(
-                                                              color: isError
+                                                              color: row.isError
                                                                   ? const Color(0xFFF87171)
                                                                   : const Color(0xFF86EFAC),
                                                               fontWeight:
@@ -243,7 +203,7 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
                                                           ),
                                                           TextSpan(
                                                             text:
-                                                                ' in ${_durationLabel(item)}',
+                                                                ' in ${row.durationLabel}',
                                                             style: TextStyle(
                                                               color: theme.colorScheme
                                                                   .mutedForeground,
@@ -256,7 +216,7 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
                                                 ),
                                               ),
                                             ),
-                                            if (isError)
+                                            if (row.isError)
                                               const Padding(
                                                 padding: EdgeInsets.only(right: 20),
                                                 child: Icon(

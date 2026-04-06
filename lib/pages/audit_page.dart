@@ -24,6 +24,7 @@ class _AuditPageState extends State<AuditPage> {
   }
 
   Future<void> _fetch() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;

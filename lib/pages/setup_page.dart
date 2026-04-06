@@ -3,6 +3,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../api/api.dart';
 import '../services/config_service.dart';
+import '../utils/url_utils.dart';
 import 'home_page.dart';
 
 class SetupPage extends StatefulWidget {
@@ -27,11 +28,11 @@ class _SetupPageState extends State<SetupPage> {
   @override
   void initState() {
     super.initState();
-    final splitBaseUrl = _splitBaseUrl(ConfigService.instance.displayBaseUrl);
-    _baseUrl.text = splitBaseUrl.url;
-    _port.text = splitBaseUrl.port;
-    _loginBaseUrl.text = splitBaseUrl.url;
-    _loginPort.text = splitBaseUrl.port.isEmpty ? '5678' : splitBaseUrl.port;
+    final split = splitBaseUrl(ConfigService.instance.displayBaseUrl);
+    _baseUrl.text = split.url;
+    _port.text = split.port;
+    _loginBaseUrl.text = split.url;
+    _loginPort.text = split.port.isEmpty ? '5678' : split.port;
   }
 
   @override
@@ -47,7 +48,7 @@ class _SetupPageState extends State<SetupPage> {
   }
 
   Future<void> _save() async {
-    final normalizedBaseUrl = _buildBaseUrl(_baseUrl.text, _port.text);
+    final normalizedBaseUrl = buildBaseUrl(_baseUrl.text, _port.text);
     final apiKey = _apiKey.text.trim();
 
     if (normalizedBaseUrl.isEmpty || apiKey.isEmpty) {
@@ -120,38 +121,6 @@ class _SetupPageState extends State<SetupPage> {
         ),
       );
     }
-  }
-
-  String _buildBaseUrl(String rawUrl, String rawPort) {
-    final normalizedUrl = rawUrl.trim().replaceAll(RegExp(r'/$'), '');
-    final uri = Uri.tryParse(normalizedUrl);
-    if (uri == null || uri.host.isEmpty) return normalizedUrl;
-
-    final port = rawPort.trim();
-    if (port.isEmpty) {
-      return uri.replace(port: null).toString().replaceAll(RegExp(r'/$'), '');
-    }
-
-    final parsedPort = int.tryParse(port);
-    if (parsedPort == null) return normalizedUrl;
-    return uri
-        .replace(port: parsedPort)
-        .toString()
-        .replaceAll(RegExp(r'/$'), '');
-  }
-
-  ({String url, String port}) _splitBaseUrl(String rawValue) {
-    final normalizedValue = rawValue.trim();
-    final uri = Uri.tryParse(normalizedValue);
-    if (uri == null || uri.host.isEmpty) {
-      return (url: normalizedValue, port: '');
-    }
-
-    final hasExplicitPort = normalizedValue.contains(':${uri.port}');
-    return (
-      url: uri.replace(port: null).toString().replaceAll(RegExp(r'/$'), ''),
-      port: hasExplicitPort ? '${uri.port}' : '',
-    );
   }
 
   String? _validateBaseUrl(String value) {
