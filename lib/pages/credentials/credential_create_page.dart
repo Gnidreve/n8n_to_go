@@ -68,14 +68,14 @@ class _CredentialCreatePageState extends State<CredentialCreatePage> {
         centerTitle: true,
         title: const Text('Create Credential'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(false),
         ),
         actions: [
           IconButton(
             icon: _saving
                 ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.check),
+                : const Icon(LucideIcons.check),
             onPressed: _saving ? null : _save,
           ),
         ],

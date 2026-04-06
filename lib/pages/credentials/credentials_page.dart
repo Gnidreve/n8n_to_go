@@ -47,12 +47,12 @@ class _CredentialsPageState extends State<CredentialsPage> {
         centerTitle: true,
         title: const Text('Credentials'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: const Icon(LucideIcons.plus),
             onPressed: () async {
               final reload = await Navigator.of(context).push<bool>(
                 MaterialPageRoute(builder: (_) => const CredentialTypeSelectPage()),
@@ -98,8 +98,7 @@ class _CredentialsPageState extends State<CredentialsPage> {
                         return ListTile(
                           leading: CredentialIcon(type: type),
                           title: Text(name),
-                          subtitle: type != null ? Text(type) : null,
-                          trailing: const Icon(Icons.chevron_right, size: 20),
+                          trailing: const Icon(LucideIcons.chevronRight, size: 20),
                           onTap: () async {
                             final reload = await Navigator.of(context).push<bool>(
                               MaterialPageRoute(

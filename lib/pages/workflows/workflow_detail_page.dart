@@ -58,7 +58,7 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
         centerTitle: true,
         title: Text(widget.name),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -69,32 +69,70 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
                   padding: const EdgeInsets.all(16),
                   child: Text('Error: $_error'),
                 )
-              : ListView(
+              : Padding(
                   padding: const EdgeInsets.all(16),
-                  children: [
-                    _CopyRow('Workflow ID', w!['id'] as String? ?? '—'),
-                    _StatusRow(active: w['active'] == true),
-                    _Row('Archived', w['isArchived'] == true ? 'Yes' : 'No'),
-                    _Row('Trigger count', '${w['triggerCount'] ?? 0}'),
-                    _Row('Execution order', w['settings']?['executionOrder'] ?? '—'),
-                    _Row('Created', w['createdAt'] ?? '—'),
-                    _Row('Updated', w['updatedAt'] ?? '—'),
-                    if ((w['tags'] as List?)?.isNotEmpty == true)
-                      _Row('Tags', (w['tags'] as List).map((t) => t['name']).join(', ')),
-                    const SizedBox(height: 24),
-                    const Text('Executions', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                    const SizedBox(height: 8),
-                    if (_executions.isEmpty)
-                      const Text('No executions')
-                    else
-                      ..._executions.map((e) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: _Row(
-                          e['status'] ?? '—',
-                          e['startedAt'] ?? '—',
+                  child: ShadTabs<String>(
+                    value: 'details',
+                    tabs: [
+                      ShadTab(
+                        value: 'details',
+                        content: ShadCard(
+                          title: const Text('Details'),
+                          description: const Text(
+                            'Workflow metadata and publication state.',
+                          ),
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 16),
+                              _CopyRow('Workflow ID', w!['id'] as String? ?? '—'),
+                              _StatusRow(active: w['active'] == true),
+                              _Row('Archived', w['isArchived'] == true ? 'Yes' : 'No'),
+                              _Row('Trigger count', '${w['triggerCount'] ?? 0}'),
+                              _Row('Execution order', w['settings']?['executionOrder'] ?? '—'),
+                              _Row('Created', w['createdAt'] ?? '—'),
+                              _Row('Updated', w['updatedAt'] ?? '—'),
+                              if ((w['tags'] as List?)?.isNotEmpty == true)
+                                _Row(
+                                  'Tags',
+                                  (w['tags'] as List).map((t) => t['name']).join(', '),
+                                ),
+                            ],
+                          ),
                         ),
-                      )),
-                  ],
+                        child: const Text('Details'),
+                      ),
+                      ShadTab(
+                        value: 'executions',
+                        content: ShadCard(
+                          title: const Text('Executions'),
+                          description: const Text(
+                            'Recent executions for this workflow.',
+                          ),
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 16),
+                              if (_executions.isEmpty)
+                                const Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text('No executions'),
+                                )
+                              else
+                                ..._executions.map(
+                                  (e) => Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 4),
+                                    child: _Row(
+                                      e['status'] ?? '—',
+                                      e['startedAt'] ?? '—',
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        child: const Text('Executions'),
+                      ),
+                    ],
+                  ),
                 ),
     );
   }
@@ -134,7 +172,7 @@ class _CopyRow extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const Icon(Icons.copy, size: 14),
+                  const Icon(LucideIcons.copy, size: 14),
                 ],
               ),
             ),

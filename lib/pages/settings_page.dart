@@ -54,7 +54,7 @@ class _SettingsPageState extends State<SettingsPage> {
         centerTitle: true,
         title: const Text('Settings'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
@@ -64,7 +64,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     dimension: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.check),
+                : const Icon(LucideIcons.check),
             onPressed: _saving ? null : _save,
           ),
         ],

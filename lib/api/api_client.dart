@@ -46,9 +46,12 @@ class ApiClient {
     return _decodeMap(response.body);
   }
 
-  Future<void> delete(String path) async {
+  Future<void> delete(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
     await http.delete(
-      _buildUri(path),
+      _buildUri(path, queryParameters: queryParameters),
       headers: _headers(),
     );
   }

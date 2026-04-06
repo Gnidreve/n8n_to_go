@@ -45,7 +45,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
         centerTitle: true,
         title: const Text('Workflows'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),

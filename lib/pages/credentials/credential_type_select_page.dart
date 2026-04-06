@@ -61,7 +61,7 @@ class _CredentialTypeSelectPageState extends State<CredentialTypeSelectPage> {
         centerTitle: true,
         title: const Text('Choose Credential Type'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(false),
         ),
       ),
@@ -93,7 +93,7 @@ class _CredentialTypeSelectPageState extends State<CredentialTypeSelectPage> {
                       dimension: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Icons.chevron_right, size: 20),
+                  : const Icon(LucideIcons.chevronRight, size: 20),
               onTap: _loadingType == null ? () => _openCreateForm(credentialType) : null,
             );
           },

@@ -106,20 +106,20 @@ class _CredentialDetailPageState extends State<CredentialDetailPage> {
         centerTitle: true,
         title: Text(_name.text.isNotEmpty ? _name.text : 'Credential'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(false),
         ),
         actions: [
           IconButton(
             icon: _deleting
                 ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.delete_outline),
+                : const Icon(LucideIcons.trash2),
             onPressed: _deleting ? null : _delete,
           ),
           IconButton(
             icon: _saving
                 ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.check),
+                : const Icon(LucideIcons.check),
             onPressed: _saving ? null : _save,
           ),
         ],

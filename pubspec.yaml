@@ -28,14 +28,14 @@ flutter_native_splash:
    color: "#ffffff"
    image: lib/assets/app-logo.png
    android: true
-   ios: false
+   ios: true
    android_12:
       color: "#ffffff"
       image: lib/assets/app-logo.png
 
 flutter_launcher_icons:
    android: true
-   ios: false
+   ios: true
    image_path: "lib/assets/app-logo.png"
 
 flutter:

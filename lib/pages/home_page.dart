@@ -20,10 +20,10 @@ class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   static final _items = [
-    (title: 'Workflows',   icon: Icons.account_tree_outlined, route: WorkflowsPage.new),
-    (title: 'Executions',  icon: Icons.bolt_outlined,         route: ExecutionsPage.new),
-    (title: 'Data Tables', icon: Icons.table_chart_outlined,  route: DataTablesPage.new),
-    (title: 'Credentials', icon: Icons.key_outlined,          route: CredentialsPage.new),
+    (title: 'Workflows',   icon: LucideIcons.workflow, route: WorkflowsPage.new),
+    (title: 'Executions',  icon: LucideIcons.bolt,     route: ExecutionsPage.new),
+    (title: 'Data Tables', icon: LucideIcons.table,    route: DataTablesPage.new),
+    (title: 'Credentials', icon: LucideIcons.keyRound, route: CredentialsPage.new),
   ];
 
   @override
@@ -36,7 +36,7 @@ class HomePage extends StatelessWidget {
         title: n8nAppBarTitle(),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
+            icon: const Icon(LucideIcons.settings),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const SettingsPage()),
             ),
@@ -64,7 +64,7 @@ class HomePage extends StatelessWidget {
                         const SizedBox(width: 16),
                         Text(_items[i].title, style: theme.textTheme.h4),
                         const Spacer(),
-                        const Icon(Icons.arrow_forward, size: 18),
+                        const Icon(LucideIcons.chevronRight, size: 18),
                       ],
                     ),
                   ),
