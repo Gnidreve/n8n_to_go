@@ -49,9 +49,73 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
     }
   }
 
+  DateTime? _parseDate(dynamic value) {
+    if (value is! String || value.isEmpty) return null;
+    return DateTime.tryParse(value)?.toLocal();
+  }
+
+  String _formatDateTime(DateTime? value) {
+    if (value == null) return 'Unknown date';
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final month = months[value.month - 1];
+    final day = value.day;
+    final hour = value.hour.toString().padLeft(2, '0');
+    final minute = value.minute.toString().padLeft(2, '0');
+    final second = value.second.toString().padLeft(2, '0');
+    return '$month $day, $hour:$minute:$second';
+  }
+
+  bool _isError(Map<String, dynamic> item) {
+    final raw = (item['status'] ?? '').toString().toLowerCase();
+    return raw.contains('error') || raw.contains('fail');
+  }
+
+  String _statusLabel(Map<String, dynamic> item) {
+    final raw = (item['status'] ?? '').toString();
+    if (raw.isEmpty) return 'Unknown';
+    return raw[0].toUpperCase() + raw.substring(1);
+  }
+
+  String _durationLabel(Map<String, dynamic> item) {
+    final explicit = item['runTime'] ?? item['duration'] ?? item['executionTime'];
+    if (explicit is num) {
+      final seconds = explicit >= 1000 ? explicit / 1000 : explicit.toDouble();
+      return _formatSeconds(seconds);
+    }
+
+    final startedAt = _parseDate(item['startedAt']);
+    final stoppedAt = _parseDate(item['stoppedAt'] ?? item['finishedAt']);
+    if (startedAt != null && stoppedAt != null) {
+      final seconds = stoppedAt.difference(startedAt).inMilliseconds / 1000;
+      return _formatSeconds(seconds);
+    }
+
+    return '—';
+  }
+
+  String _formatSeconds(double seconds) {
+    if (seconds >= 10) return '${seconds.toStringAsFixed(2)}s';
+    if (seconds >= 1) return '${seconds.toStringAsFixed(3)}s';
+    return '${seconds.toStringAsFixed(0)}ms';
+  }
+
   @override
   Widget build(BuildContext context) {
     final w = _workflow;
+    final theme = ShadTheme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -109,6 +173,7 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
                             'Recent executions for this workflow.',
                           ),
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               const SizedBox(height: 16),
                               if (_executions.isEmpty)
@@ -118,13 +183,91 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
                                 )
                               else
                                 ..._executions.map(
-                                  (e) => Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 4),
-                                    child: _Row(
-                                      e['status'] ?? '—',
-                                      e['startedAt'] ?? '—',
-                                    ),
-                                  ),
+                                  (e) {
+                                    final item = Map<String, dynamic>.from(e as Map);
+                                    final startedAt = _parseDate(
+                                      item['startedAt'] ?? item['createdAt'],
+                                    );
+                                    final isError = _isError(item);
+                                    final accent = isError
+                                        ? const Color(0xFFF87171)
+                                        : const Color(0xFF86EFAC);
+
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 10),
+                                      child: ShadCard(
+                                        padding: EdgeInsets.zero,
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 4,
+                                              height: 84,
+                                              decoration: BoxDecoration(
+                                                color: accent,
+                                                borderRadius: const BorderRadius.only(
+                                                  topLeft: Radius.circular(6),
+                                                  bottomLeft: Radius.circular(6),
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: Padding(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 14,
+                                                  vertical: 12,
+                                                ),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      _formatDateTime(startedAt),
+                                                      style: const TextStyle(
+                                                        fontSize: 15,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Text.rich(
+                                                      TextSpan(
+                                                        children: [
+                                                          TextSpan(
+                                                            text: _statusLabel(item),
+                                                            style: TextStyle(
+                                                              color: isError
+                                                                  ? const Color(0xFFF87171)
+                                                                  : const Color(0xFF86EFAC),
+                                                              fontWeight:
+                                                                  FontWeight.w600,
+                                                            ),
+                                                          ),
+                                                          TextSpan(
+                                                            text:
+                                                                ' in ${_durationLabel(item)}',
+                                                            style: TextStyle(
+                                                              color: theme.colorScheme
+                                                                  .mutedForeground,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            const Padding(
+                                              padding: EdgeInsets.only(right: 14),
+                                              child: Icon(
+                                                LucideIcons.refreshCw,
+                                                size: 16,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                             ],
                           ),

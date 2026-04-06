@@ -111,102 +111,105 @@ class _ExecutionsPageState extends State<ExecutionsPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    'Error: $_error',
-                    style: TextStyle(
-                      color: theme.colorScheme.destructive,
-                    ),
-                  ),
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _items.isEmpty ? 1 : _items.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemBuilder: (context, i) {
-                    if (_items.isEmpty) return const Text('No executions');
-                    final item = Map<String, dynamic>.from(_items[i] as Map);
-                    final startedAt = _parseDate(
-                      item['startedAt'] ?? item['createdAt'],
-                    );
-                    final isError = _isError(item);
-                    final accent = isError
-                        ? const Color(0xFFF87171)
-                        : const Color(0xFF86EFAC);
-
-                    return ShadCard(
-                      padding: EdgeInsets.zero,
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 4,
-                            height: 84,
-                            decoration: BoxDecoration(
-                              color: accent,
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(6),
-                                bottomLeft: Radius.circular(6),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 12,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _formatDateTime(startedAt),
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text.rich(
-                                    TextSpan(
-                                      children: [
-                                        TextSpan(
-                                          text: _statusLabel(item),
-                                          style: TextStyle(
-                                            color: isError
-                                                ? const Color(0xFFF87171)
-                                                : const Color(0xFF86EFAC),
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        TextSpan(
-                                          text: ' in ${_durationLabel(item)}',
-                                          style: TextStyle(
-                                            color: theme.colorScheme.mutedForeground,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.only(right: 14),
-                            child: Icon(
-                              LucideIcons.refreshCw,
-                              size: 16,
-                            ),
-                          ),
-                        ],
+      body: SafeArea(
+        top: false,
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+                ? SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      'Error: $_error',
+                      style: TextStyle(
+                        color: theme.colorScheme.destructive,
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _items.isEmpty ? 1 : _items.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    itemBuilder: (context, i) {
+                      if (_items.isEmpty) return const Text('No executions');
+                      final item = Map<String, dynamic>.from(_items[i] as Map);
+                      final startedAt = _parseDate(
+                        item['startedAt'] ?? item['createdAt'],
+                      );
+                      final isError = _isError(item);
+                      final accent = isError
+                          ? const Color(0xFFF87171)
+                          : const Color(0xFF86EFAC);
+
+                      return ShadCard(
+                        padding: EdgeInsets.zero,
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 4,
+                              height: 84,
+                              decoration: BoxDecoration(
+                                color: accent,
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(6),
+                                  bottomLeft: Radius.circular(6),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _formatDateTime(startedAt),
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text.rich(
+                                      TextSpan(
+                                        children: [
+                                          TextSpan(
+                                            text: _statusLabel(item),
+                                            style: TextStyle(
+                                              color: isError
+                                                  ? const Color(0xFFF87171)
+                                                  : const Color(0xFF86EFAC),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text: ' in ${_durationLabel(item)}',
+                                            style: TextStyle(
+                                              color: theme.colorScheme.mutedForeground,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.only(right: 14),
+                              child: Icon(
+                                LucideIcons.refreshCw,
+                                size: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+      ),
     );
   }
 }
