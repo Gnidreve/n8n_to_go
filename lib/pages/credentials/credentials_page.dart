@@ -3,6 +3,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
 import '../../widgets/credential_icon.dart';
+import '../../widgets/dead_filter_select.dart';
 import 'credential_detail_page.dart';
 import 'credential_type_select_page.dart';
 
@@ -73,13 +74,25 @@ class _CredentialsPageState extends State<CredentialsPage> {
                     ),
                   ),
                 )
-              : _items.isEmpty
-                  ? const Center(child: Text('No credentials'))
-                  : ListView.separated(
-                      itemCount: _items.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
+              : ListView.separated(
+                      padding: const EdgeInsets.only(top: 16, bottom: 16),
+                      itemCount: _items.isEmpty ? 2 : _items.length + 1,
+                      separatorBuilder: (_, index) =>
+                          index == 0 ? const SizedBox(height: 12) : const Divider(height: 1),
                       itemBuilder: (context, i) {
-                        final item = _items[i] as Map<String, dynamic>;
+                        if (i == 0) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: DeadFilterSelect(),
+                          );
+                        }
+                        if (_items.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Text('No credentials'),
+                          );
+                        }
+                        final item = _items[i - 1] as Map<String, dynamic>;
                         final name = item['name'] as String? ?? '—';
                         final type = item['type'] as String?;
                         return ListTile(

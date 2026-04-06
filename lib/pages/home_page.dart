@@ -45,31 +45,35 @@ class HomePage extends StatelessWidget {
       ),
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
-        itemCount: _items.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 12),
-        itemBuilder: (context, i) {
-          final item = _items[i];
-          return Card(
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => item.route()),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Row(
-                  children: [
-                    Icon(item.icon, size: 24),
-                    const SizedBox(width: 16),
-                    Text(item.title, style: theme.textTheme.h4),
-                    const Spacer(),
-                    const Icon(Icons.arrow_forward, size: 18),
-                  ],
+        itemCount: 1,
+        separatorBuilder: (_, _) => const SizedBox.shrink(),
+        itemBuilder: (context, _) => Card(
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              for (var i = 0; i < _items.length; i++) ...[
+                InkWell(
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => _items[i].route()),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    child: Row(
+                      children: [
+                        Icon(_items[i].icon, size: 24),
+                        const SizedBox(width: 16),
+                        Text(_items[i].title, style: theme.textTheme.h4),
+                        const Spacer(),
+                        const Icon(Icons.arrow_forward, size: 18),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          );
-        },
+                if (i < _items.length - 1) const Divider(height: 1),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

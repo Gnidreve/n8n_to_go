@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../widgets/dead_filter_select.dart';
 import 'workflow_detail_page.dart';
 
 class WorkflowsPage extends StatefulWidget {
@@ -59,13 +60,17 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
                       color: ShadTheme.of(context).colorScheme.destructive,
                     ),
                   ),
-                )
+                  )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
-                  itemCount: _items.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 12),
+                  itemCount: _items.length + 1,
+                  separatorBuilder: (_, index) =>
+                      index == 0 ? const SizedBox(height: 16) : const SizedBox(height: 12),
                   itemBuilder: (context, i) {
-                    final item = _items[i] as Map<String, dynamic>;
+                    if (i == 0) {
+                      return const DeadFilterSelect();
+                    }
+                    final item = _items[i - 1] as Map<String, dynamic>;
                     final name = item['name'] as String? ?? 'Workflow';
                     final description = item['description'] as String?;
                     return Card(

@@ -92,11 +92,8 @@ class _CredentialCreatePageState extends State<CredentialCreatePage> {
                 placeholder: const Text('z.B. My Github Account'),
               ),
             ),
-            const SizedBox(height: 20),
-            _StaticField(
-              label: 'Type',
-              value: widget.credentialType,
-            ),
+            const SizedBox(height: 24),
+            const ShadSeparator.horizontal(),
             const SizedBox(height: 24),
             const Text('Credential data', style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
@@ -108,44 +105,6 @@ class _CredentialCreatePageState extends State<CredentialCreatePage> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _StaticField extends StatelessWidget {
-  const _StaticField({
-    required this.label,
-    required this.value,
-  });
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 6,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            border: Border.all(color: theme.colorScheme.border),
-            borderRadius: theme.radius,
-            color: theme.colorScheme.input,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            child: Row(
-              children: [
-                Expanded(child: Text(value)),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

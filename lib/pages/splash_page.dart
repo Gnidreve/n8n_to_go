@@ -37,7 +37,19 @@ class _SplashPageState extends State<SplashPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: SvgPicture.asset('lib/assets/splash-screem.svg', width: 160),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset('lib/assets/splash-screem.svg', width: 160),
+            const SizedBox(height: 24),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.sizeOf(context).width * 0.6,
+              ),
+              child: const ShadProgress(value: 0.5),
+            ),
+          ],
+        ),
       ),
     );
   }

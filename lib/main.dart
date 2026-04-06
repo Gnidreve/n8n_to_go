@@ -79,6 +79,17 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       theme: appTheme,
       darkTheme: appDarkTheme,
       themeMode: PreferencesService.instance.themeMode,
+      materialThemeBuilder: (context, theme) {
+        final shadTheme = ShadTheme.of(context);
+        return theme.copyWith(
+          appBarTheme: theme.appBarTheme.copyWith(
+            backgroundColor: shadTheme.colorScheme.card,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+          ),
+        );
+      },
       home: const SplashPage(),
     );
   }

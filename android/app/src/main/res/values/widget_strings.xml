@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="widget_title">n8n to go</string>
-    <string name="widget_message">Hello World</string>
-    <string name="widget_description">A simple hello world home screen widget for n8n to go.</string>
+    <string name="widget_label_prod_executions">Prod. executions</string>
+    <string name="widget_value_prod_executions">2</string>
+    <string name="widget_label_failed_prod_executions">Failed prod. executions</string>
+    <string name="widget_value_failed_prod_executions">0</string>
+    <string name="widget_label_failure_rate">Failure rate</string>
+    <string name="widget_value_failure_rate">0%%</string>
+    <string name="widget_label_time_saved">Time saved</string>
+    <string name="widget_value_time_saved">--</string>
+    <string name="widget_label_run_time_avg">Run time (avg.)</string>
+    <string name="widget_value_run_time_avg">16.91s</string>
+    <string name="widget_description">A static production metrics home screen widget for n8n to go.</string>
 </resources>

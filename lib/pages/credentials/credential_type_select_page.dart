@@ -4,6 +4,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../CREDENTIAL_TYPES.dart';
 import '../../api/api.dart';
 import '../../widgets/credential_icon.dart';
+import '../../widgets/dead_filter_select.dart';
 import 'credential_create_page.dart';
 
 class CredentialTypeSelectPage extends StatefulWidget {
@@ -68,10 +69,14 @@ class _CredentialTypeSelectPageState extends State<CredentialTypeSelectPage> {
         top: false,
         child: ListView.separated(
           padding: const EdgeInsets.all(16),
-          itemCount: sortedTypes.length,
-          separatorBuilder: (_, _) => const Divider(height: 1),
+          itemCount: sortedTypes.length + 1,
+          separatorBuilder: (_, index) =>
+              index == 0 ? const SizedBox(height: 12) : const Divider(height: 1),
           itemBuilder: (context, index) {
-            final entry = sortedTypes[index];
+            if (index == 0) {
+              return const DeadFilterSelect();
+            }
+            final entry = sortedTypes[index - 1];
             final credentialLabel = entry.key;
             final credentialType = entry.value;
             final isLoading = _loadingType == credentialType;
@@ -81,10 +86,6 @@ class _CredentialTypeSelectPageState extends State<CredentialTypeSelectPage> {
               leading: CredentialIcon(type: credentialType),
               title: Text(
                 credentialLabel,
-                textAlign: TextAlign.left,
-              ),
-              subtitle: Text(
-                credentialType,
                 textAlign: TextAlign.left,
               ),
               trailing: isLoading

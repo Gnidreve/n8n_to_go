@@ -18,8 +18,46 @@ class N8nHelloWorldWidgetProvider : AppWidgetProvider() {
 
     private fun buildRemoteViews(context: Context): RemoteViews {
         return RemoteViews(context.packageName, R.layout.n8n_hello_world_widget).apply {
-            setTextViewText(R.id.widget_title, context.getString(R.string.widget_title))
-            setTextViewText(R.id.widget_message, context.getString(R.string.widget_message))
+            setTextViewText(
+                R.id.widget_metric_label_1,
+                context.getString(R.string.widget_label_prod_executions),
+            )
+            setTextViewText(
+                R.id.widget_metric_value_1,
+                context.getString(R.string.widget_value_prod_executions),
+            )
+            setTextViewText(
+                R.id.widget_metric_label_2,
+                context.getString(R.string.widget_label_failed_prod_executions),
+            )
+            setTextViewText(
+                R.id.widget_metric_value_2,
+                context.getString(R.string.widget_value_failed_prod_executions),
+            )
+            setTextViewText(
+                R.id.widget_metric_label_3,
+                context.getString(R.string.widget_label_failure_rate),
+            )
+            setTextViewText(
+                R.id.widget_metric_value_3,
+                context.getString(R.string.widget_value_failure_rate),
+            )
+            setTextViewText(
+                R.id.widget_metric_label_4,
+                context.getString(R.string.widget_label_time_saved),
+            )
+            setTextViewText(
+                R.id.widget_metric_value_4,
+                context.getString(R.string.widget_value_time_saved),
+            )
+            setTextViewText(
+                R.id.widget_metric_label_5,
+                context.getString(R.string.widget_label_run_time_avg),
+            )
+            setTextViewText(
+                R.id.widget_metric_value_5,
+                context.getString(R.string.widget_value_run_time_avg),
+            )
         }
     }
 }

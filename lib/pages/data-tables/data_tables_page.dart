@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../widgets/dead_filter_select.dart';
 class DataTablesPage extends StatefulWidget {
   const DataTablesPage({super.key});
 
@@ -62,15 +63,21 @@ class _DataTablesPageState extends State<DataTablesPage> {
                 )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
-                  itemCount: _items.length,
-                  separatorBuilder: (_, _) => const ShadSeparator.horizontal(
+                  itemCount: _items.isEmpty ? 2 : _items.length + 1,
+                  separatorBuilder: (_, index) => index == 0
+                      ? const SizedBox(height: 16)
+                      : const ShadSeparator.horizontal(
                     thickness: 4,
                     margin: EdgeInsets.symmetric(horizontal: 20),
                     radius: BorderRadius.all(Radius.circular(4)),
                   ),
-                  itemBuilder: (context, i) => Text(
-                    const JsonEncoder.withIndent('  ').convert(_items[i]),
-                  ),
+                  itemBuilder: (context, i) {
+                    if (i == 0) return const DeadFilterSelect();
+                    if (_items.isEmpty) return const Text('No data tables');
+                    return Text(
+                      const JsonEncoder.withIndent('  ').convert(_items[i - 1]),
+                    );
+                  },
                 ),
     );
   }
