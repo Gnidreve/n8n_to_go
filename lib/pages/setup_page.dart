@@ -14,12 +14,18 @@ class SetupPage extends StatefulWidget {
 class _SetupPageState extends State<SetupPage> {
   final _baseUrl = TextEditingController();
   final _apiKey = TextEditingController();
+  final _loginBaseUrl = TextEditingController();
+  final _loginEmail = TextEditingController();
+  final _loginPassword = TextEditingController();
   bool _saving = false;
 
   @override
   void dispose() {
     _baseUrl.dispose();
     _apiKey.dispose();
+    _loginBaseUrl.dispose();
+    _loginEmail.dispose();
+    _loginPassword.dispose();
     super.dispose();
   }
 
@@ -67,33 +73,113 @@ class _SetupPageState extends State<SetupPage> {
                     style: theme.textTheme.muted,
                   ),
                   const SizedBox(height: 40),
-                  _Field(
-                    label: 'Base URL',
-                    child: ShadInput(
-                      controller: _baseUrl,
-                      placeholder: const Text('https://your-n8n-instance.com'),
-                      keyboardType: TextInputType.url,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _Field(
-                    label: 'API Key',
-                    child: ShadInput(
-                      controller: _apiKey,
-                      placeholder: const Text('Your n8n API key'),
-                      obscureText: true,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  ShadButton(
-                    width: double.infinity,
-                    onPressed: _saving ? null : _save,
-                    child: _saving
-                        ? const SizedBox.square(
-                            dimension: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Connect'),
+                  ShadTabs<String>(
+                    value: 'api-key',
+                    tabBarConstraints: const BoxConstraints(maxWidth: 400),
+                    contentConstraints: const BoxConstraints(maxWidth: 400),
+                    tabs: [
+                      ShadTab(
+                        value: 'login',
+                        content: ShadCard(
+                          title: const Text('Login'),
+                          description: const Text(
+                            'Direct login is in preparation and will be added in a separate flow.',
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const SizedBox(height: 16),
+                              _Field(
+                                label: 'Base URL',
+                                child: ShadInput(
+                                  controller: _loginBaseUrl,
+                                  placeholder: const Text(
+                                    'https://your-n8n-instance.com',
+                                  ),
+                                  keyboardType: TextInputType.url,
+                                  enabled: false,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _Field(
+                                label: 'Email',
+                                child: ShadInput(
+                                  controller: _loginEmail,
+                                  placeholder: const Text('you@example.com'),
+                                  keyboardType: TextInputType.emailAddress,
+                                  enabled: false,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _Field(
+                                label: 'Password',
+                                child: ShadInput(
+                                  controller: _loginPassword,
+                                  placeholder: const Text('Your password'),
+                                  obscureText: true,
+                                  enabled: false,
+                                ),
+                              ),
+                              const SizedBox(height: 32),
+                              const ShadButton(
+                                width: double.infinity,
+                                enabled: false,
+                                child: Text('Continue with login'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        child: const Text('Login'),
+                      ),
+                      ShadTab(
+                        value: 'api-key',
+                        content: ShadCard(
+                          title: const Text('API Key'),
+                          description: const Text(
+                            'Connect with your base URL and n8n API key.',
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const SizedBox(height: 16),
+                              _Field(
+                                label: 'Base URL',
+                                child: ShadInput(
+                                  controller: _baseUrl,
+                                  placeholder: const Text(
+                                    'https://your-n8n-instance.com',
+                                  ),
+                                  keyboardType: TextInputType.url,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _Field(
+                                label: 'API Key',
+                                child: ShadInput(
+                                  controller: _apiKey,
+                                  placeholder: const Text('Your n8n API key'),
+                                  obscureText: true,
+                                ),
+                              ),
+                              const SizedBox(height: 32),
+                              ShadButton(
+                                width: double.infinity,
+                                onPressed: _saving ? null : _save,
+                                child: _saving
+                                    ? const SizedBox.square(
+                                        dimension: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Text('Connect'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        child: const Text('API Key'),
+                      ),
+                    ],
                   ),
                 ],
               ),

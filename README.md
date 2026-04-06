@@ -71,6 +71,20 @@ No analytics, no external tracking, no data leaves your device beyond calls to y
 
 ---
 
+## Roadmap
+
+- Login via Autentification, not only API-Key
+- Push-Notifications on Error or Success
+- User Management directly in the app
+- Dynamic Up to Date Widgets for your homescreen (android-first)
+- Maybe Templates Integrations, but i dont think i will care about that when i get to it
+
+- n8n chat after beta is completed
+
+> Basicly everythink the current API allows, except things not in the freemium self-hosted (e.g. i can't use variables)
+
+---
+
 ## Disclaimer
 
 This is an **unofficial** app and is not affiliated with or endorsed by n8n GmbH.
