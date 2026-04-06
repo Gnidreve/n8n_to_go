@@ -51,3 +51,4 @@ app.*.map.json
 Agents.md
 /api/*
 .codex
+TODO.md

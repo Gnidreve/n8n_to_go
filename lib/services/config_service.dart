@@ -23,7 +23,12 @@ class ConfigService {
     _apiKeyFromStorage = storedKey != null && storedKey.isNotEmpty;
 
     // Secure storage takes priority over .env
-    _baseUrl = _baseUrlFromStorage ? storedBase : dotenv.env['BASE_URL'];
+    _baseUrl = _baseUrlFromStorage
+        ? storedBase
+        : _composeBaseUrl(
+            dotenv.env['BASE_URL'],
+            dotenv.env['BASE_PORT'],
+          );
     _apiKey = _apiKeyFromStorage ? storedKey : dotenv.env['API_KEY'];
   }
 
@@ -35,7 +40,11 @@ class ConfigService {
       (_baseUrl?.isNotEmpty == true) && (_apiKey?.isNotEmpty == true);
 
   // Settings UI helpers
-  bool get hasEnvBaseUrl => dotenv.env['BASE_URL']?.isNotEmpty == true;
+  bool get hasEnvBaseUrl =>
+      _composeBaseUrl(
+        dotenv.env['BASE_URL'],
+        dotenv.env['BASE_PORT'],
+      ).isNotEmpty;
   bool get hasEnvApiKey => dotenv.env['API_KEY']?.isNotEmpty == true;
 
   /// Field is editable when value is from storage (user can override)
@@ -55,5 +64,21 @@ class ConfigService {
     _apiKey = apiKey;
     _baseUrlFromStorage = true;
     _apiKeyFromStorage = true;
+  }
+
+  String _composeBaseUrl(String? rawBaseUrl, String? rawPort) {
+    final baseUrl = (rawBaseUrl ?? '').trim().replaceAll(RegExp(r'/$'), '');
+    if (baseUrl.isEmpty) return '';
+
+    final uri = Uri.tryParse(baseUrl);
+    if (uri == null || uri.host.isEmpty) return baseUrl;
+
+    final port = (rawPort ?? '').trim();
+    if (port.isEmpty) return baseUrl;
+
+    final parsedPort = int.tryParse(port);
+    if (parsedPort == null) return baseUrl;
+
+    return uri.replace(port: parsedPort).toString().replaceAll(RegExp(r'/$'), '');
   }
 }

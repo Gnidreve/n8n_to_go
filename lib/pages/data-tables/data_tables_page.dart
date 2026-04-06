@@ -26,20 +26,38 @@ class _DataTablesPageState extends State<DataTablesPage> {
     setState(() { _loading = true; _error = null; });
     try {
       final res = await dataTables.getAll();
-      final data = res['data'];
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _items = data is List<dynamic>
-            ? data
-            : res.isNotEmpty
-                ? [res]
-                : [];
+        _items = _extractTables(res);
       });
     } catch (e) {
       if (!mounted) return;
       setState(() { _loading = false; _error = e.toString(); });
     }
+  }
+
+  List<Map<String, dynamic>> _extractTables(Map<String, dynamic> response) {
+    final data = response['data'];
+    if (data is List) {
+      return data
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
+    if (data is Map) {
+      return [Map<String, dynamic>.from(data)];
+    }
+    if (response['items'] is List) {
+      return (response['items'] as List)
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
+    if (response.containsKey('id') || response.containsKey('name')) {
+      return [response];
+    }
+    return const [];
   }
 
   int _columnCount(Map<String, dynamic> item) {
@@ -112,7 +130,7 @@ class _DataTablesPageState extends State<DataTablesPage> {
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => DataTableDetailPage(
-                            tableId: item['id'] as String? ?? '',
+                            tableId: '${item['id'] ?? ''}',
                             initialTable: item,
                           ),
                         ),

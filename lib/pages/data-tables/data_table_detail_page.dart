@@ -48,8 +48,9 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
         ),
       ]);
       if (!mounted) return;
+      final table = _extractTable(results[0]);
       setState(() {
-        _table = results[0];
+        _table = table;
         _rows = (results[1]['data'] as List<dynamic>? ?? const [])
             .whereType<Map>()
             .map((row) => Map<String, dynamic>.from(row))
@@ -64,6 +65,14 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
         _error = e.toString();
       });
     }
+  }
+
+  Map<String, dynamic> _extractTable(Map<String, dynamic> response) {
+    final data = response['data'];
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+    return response;
   }
 
   String get _name => _table['name'] as String? ?? 'Data Table';
