@@ -14,8 +14,10 @@ class SetupPage extends StatefulWidget {
 
 class _SetupPageState extends State<SetupPage> {
   final _baseUrl = TextEditingController();
+  final _port = TextEditingController();
   final _apiKey = TextEditingController();
   final _loginBaseUrl = TextEditingController();
+  final _loginPort = TextEditingController(text: '5678');
   final _loginEmail = TextEditingController();
   final _loginPassword = TextEditingController();
   bool _saving = false;
@@ -23,17 +25,29 @@ class _SetupPageState extends State<SetupPage> {
   bool _loginPasswordObscured = true;
 
   @override
+  void initState() {
+    super.initState();
+    final splitBaseUrl = _splitBaseUrl(ConfigService.instance.displayBaseUrl);
+    _baseUrl.text = splitBaseUrl.url;
+    _port.text = splitBaseUrl.port;
+    _loginBaseUrl.text = splitBaseUrl.url;
+    _loginPort.text = splitBaseUrl.port.isEmpty ? '5678' : splitBaseUrl.port;
+  }
+
+  @override
   void dispose() {
     _baseUrl.dispose();
+    _port.dispose();
     _apiKey.dispose();
     _loginBaseUrl.dispose();
+    _loginPort.dispose();
     _loginEmail.dispose();
     _loginPassword.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
-    final normalizedBaseUrl = _normalizeBaseUrl(_baseUrl.text);
+    final normalizedBaseUrl = _buildBaseUrl(_baseUrl.text, _port.text);
     final apiKey = _apiKey.text.trim();
 
     if (normalizedBaseUrl.isEmpty || apiKey.isEmpty) {
@@ -51,6 +65,17 @@ class _SetupPageState extends State<SetupPage> {
         ShadToast.destructive(
           title: const Text('Invalid base URL'),
           description: Text(baseUrlError),
+        ),
+      );
+      return;
+    }
+
+    final portError = _validatePort(_port.text);
+    if (portError != null) {
+      ShadToaster.of(context).show(
+        ShadToast.destructive(
+          title: const Text('Invalid port'),
+          description: Text(portError),
         ),
       );
       return;
@@ -99,8 +124,33 @@ class _SetupPageState extends State<SetupPage> {
     }
   }
 
-  String _normalizeBaseUrl(String value) {
-    return value.trim().replaceAll(RegExp(r'/$'), '');
+  String _buildBaseUrl(String rawUrl, String rawPort) {
+    final normalizedUrl = rawUrl.trim().replaceAll(RegExp(r'/$'), '');
+    final uri = Uri.tryParse(normalizedUrl);
+    if (uri == null || uri.host.isEmpty) return normalizedUrl;
+
+    final port = rawPort.trim();
+    if (port.isEmpty) {
+      return uri.replace(port: null).toString().replaceAll(RegExp(r'/$'), '');
+    }
+
+    final parsedPort = int.tryParse(port);
+    if (parsedPort == null) return normalizedUrl;
+    return uri.replace(port: parsedPort).toString().replaceAll(RegExp(r'/$'), '');
+  }
+
+  ({String url, String port}) _splitBaseUrl(String rawValue) {
+    final normalizedValue = rawValue.trim();
+    final uri = Uri.tryParse(normalizedValue);
+    if (uri == null || uri.host.isEmpty) {
+      return (url: normalizedValue, port: '');
+    }
+
+    final hasExplicitPort = normalizedValue.contains(':${uri.port}');
+    return (
+      url: uri.replace(port: null).toString().replaceAll(RegExp(r'/$'), ''),
+      port: hasExplicitPort ? '${uri.port}' : '',
+    );
   }
 
   String? _validateBaseUrl(String value) {
@@ -110,6 +160,19 @@ class _SetupPageState extends State<SetupPage> {
     }
     if (uri.scheme != 'http' && uri.scheme != 'https') {
       return 'URL must start with http:// or https://.';
+    }
+    return null;
+  }
+
+  String? _validatePort(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+    final parsedPort = int.tryParse(trimmed);
+    if (parsedPort == null) {
+      return 'Port must be a number.';
+    }
+    if (parsedPort < 1 || parsedPort > 65535) {
+      return 'Port must be between 1 and 65535.';
     }
     return null;
   }
@@ -167,7 +230,7 @@ class _SetupPageState extends State<SetupPage> {
                             children: [
                               const SizedBox(height: 16),
                               _Field(
-                                label: 'Base URL',
+                                label: 'URL',
                                 child: ShadInput(
                                   controller: _loginBaseUrl,
                                   placeholder: const Text(
@@ -175,7 +238,16 @@ class _SetupPageState extends State<SetupPage> {
                                   ),
                                   leading: const Icon(LucideIcons.globe),
                                   keyboardType: TextInputType.url,
-                                  enabled: false,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _Field(
+                                label: 'Port',
+                                child: ShadInput(
+                                  controller: _loginPort,
+                                  placeholder: const Text('5678'),
+                                  leading: const Icon(LucideIcons.network),
+                                  keyboardType: TextInputType.number,
                                 ),
                               ),
                               const SizedBox(height: 16),
@@ -186,7 +258,6 @@ class _SetupPageState extends State<SetupPage> {
                                   placeholder: const Text('you@example.com'),
                                   leading: const Icon(LucideIcons.mail),
                                   keyboardType: TextInputType.emailAddress,
-                                  enabled: false,
                                 ),
                               ),
                               const SizedBox(height: 16),
@@ -206,7 +277,6 @@ class _SetupPageState extends State<SetupPage> {
                                       });
                                     },
                                   ),
-                                  enabled: false,
                                 ),
                               ),
                               const SizedBox(height: 32),
@@ -232,7 +302,7 @@ class _SetupPageState extends State<SetupPage> {
                             children: [
                               const SizedBox(height: 16),
                               _Field(
-                                label: 'Base URL',
+                                label: 'URL',
                                 child: ShadInput(
                                   controller: _baseUrl,
                                   placeholder: const Text(
@@ -240,6 +310,16 @@ class _SetupPageState extends State<SetupPage> {
                                   ),
                                   leading: const Icon(LucideIcons.globe),
                                   keyboardType: TextInputType.url,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _Field(
+                                label: 'Port',
+                                child: ShadInput(
+                                  controller: _port,
+                                  placeholder: const Text('5678'),
+                                  leading: const Icon(LucideIcons.network),
+                                  keyboardType: TextInputType.number,
                                 ),
                               ),
                               const SizedBox(height: 16),
