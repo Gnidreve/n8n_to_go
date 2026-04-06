@@ -14,7 +14,7 @@ Widget n8nAppBarTitle() => Row(
   children: [
     SvgPicture.asset('lib/assets/appbar-logo.svg', height: 22),
     const SizedBox(width: 10),
-    const Text('n8n to go'),
+    const Text('n8n 2 go'),
   ],
 );
 

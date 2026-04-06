@@ -12,8 +12,10 @@
         android:layout_weight="1"
         android:gravity="center_vertical"
         android:orientation="vertical"
-        android:paddingHorizontal="20dp"
-        android:paddingVertical="16dp">
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp">
 
         <TextView
             android:id="@+id/widget_metric_label_1"
@@ -43,8 +45,10 @@
         android:layout_weight="1"
         android:gravity="center_vertical"
         android:orientation="vertical"
-        android:paddingHorizontal="20dp"
-        android:paddingVertical="16dp">
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp">
 
         <TextView
             android:id="@+id/widget_metric_label_2"
@@ -74,8 +78,10 @@
         android:layout_weight="1"
         android:gravity="center_vertical"
         android:orientation="vertical"
-        android:paddingHorizontal="20dp"
-        android:paddingVertical="16dp">
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp">
 
         <TextView
             android:id="@+id/widget_metric_label_3"
@@ -105,8 +111,10 @@
         android:layout_weight="1"
         android:gravity="center_vertical"
         android:orientation="vertical"
-        android:paddingHorizontal="20dp"
-        android:paddingVertical="16dp">
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp">
 
         <TextView
             android:id="@+id/widget_metric_label_4"
@@ -136,8 +144,10 @@
         android:layout_weight="1"
         android:gravity="center_vertical"
         android:orientation="vertical"
-        android:paddingHorizontal="20dp"
-        android:paddingVertical="16dp">
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp">
 
         <TextView
             android:id="@+id/widget_metric_label_5"
