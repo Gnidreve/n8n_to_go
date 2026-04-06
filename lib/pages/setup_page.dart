@@ -52,9 +52,7 @@ class _SetupPageState extends State<SetupPage> {
 
     if (normalizedBaseUrl.isEmpty || apiKey.isEmpty) {
       ShadToaster.of(context).show(
-        const ShadToast.destructive(
-          title: Text('Please fill in both fields'),
-        ),
+        const ShadToast.destructive(title: Text('Please fill in both fields')),
       );
       return;
     }
@@ -136,7 +134,10 @@ class _SetupPageState extends State<SetupPage> {
 
     final parsedPort = int.tryParse(port);
     if (parsedPort == null) return normalizedUrl;
-    return uri.replace(port: parsedPort).toString().replaceAll(RegExp(r'/$'), '');
+    return uri
+        .replace(port: parsedPort)
+        .toString()
+        .replaceAll(RegExp(r'/$'), '');
   }
 
   ({String url, String port}) _splitBaseUrl(String rawValue) {
@@ -206,7 +207,7 @@ class _SetupPageState extends State<SetupPage> {
                 children: [
                   SvgPicture.asset('lib/assets/splash-screem.svg', height: 48),
                   const SizedBox(height: 24),
-                  Text('n8n for mobile', style: theme.textTheme.h2),
+                  Text('n8n to go', style: theme.textTheme.h2),
                   const SizedBox(height: 8),
                   Text(
                     'Connect your n8n instance',
@@ -390,10 +391,7 @@ class _Field extends StatelessWidget {
 }
 
 class _VisibilityToggle extends StatelessWidget {
-  const _VisibilityToggle({
-    required this.obscured,
-    required this.onPressed,
-  });
+  const _VisibilityToggle({required this.obscured, required this.onPressed});
 
   final bool obscured;
   final VoidCallback onPressed;

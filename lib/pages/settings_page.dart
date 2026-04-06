@@ -3,6 +3,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../services/config_service.dart';
 import '../services/preferences_service.dart';
+import 'setup_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -151,96 +152,193 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
         children: [
-          _SettingsField(
-            label: 'URL',
-            child: ShadInput(
-              controller: _baseUrl,
-              placeholder: const Text('https://your-n8n-instance.com'),
-              leading: const Icon(LucideIcons.globe),
-              enabled: cfg.baseUrlEditable,
-              keyboardType: TextInputType.url,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _SettingsField(
-            label: 'Port',
-            child: ShadInput(
-              controller: _port,
-              placeholder: const Text('5678'),
-              leading: const Icon(LucideIcons.network),
-              enabled: cfg.baseUrlEditable,
-              keyboardType: TextInputType.number,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _SettingsField(
-            label: 'API Key',
-            child: ShadInput(
-              controller: _apiKey,
-              placeholder: const Text('Your n8n API key'),
-              leading: const Icon(LucideIcons.lock),
-              enabled: cfg.apiKeyEditable,
-              obscureText: _apiKeyObscured,
-              trailing: SizedBox.square(
-                dimension: 24,
-                child: OverflowBox(
-                  maxWidth: 28,
-                  maxHeight: 28,
-                  child: ShadIconButton(
-                    iconSize: 20,
-                    padding: const EdgeInsets.all(2),
-                    icon: Icon(
-                      _apiKeyObscured ? LucideIcons.eyeOff : LucideIcons.eye,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _apiKeyObscured = !_apiKeyObscured;
-                      });
-                    },
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _SettingsField(
+                  label: 'URL',
+                  child: ShadInput(
+                    controller: _baseUrl,
+                    placeholder: const Text('https://your-n8n-instance.com'),
+                    leading: const Icon(LucideIcons.globe),
+                    enabled: cfg.baseUrlEditable,
+                    keyboardType: TextInputType.url,
                   ),
                 ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          const ShadSeparator.horizontal(
-            thickness: 4,
-            margin: EdgeInsets.symmetric(horizontal: 0),
-            radius: BorderRadius.all(Radius.circular(4)),
-          ),
-          const SizedBox(height: 24),
-          _SettingsField(
-            label: 'Theme',
-            child: ShadSelect<ThemeMode>(
-              initialValue: PreferencesService.instance.themeMode,
-              onChanged: (mode) {
-                if (mode != null) PreferencesService.instance.setThemeMode(mode);
-              },
-              options: const [
-                ShadOption(value: ThemeMode.system, child: Text('System')),
-                ShadOption(value: ThemeMode.light,  child: Text('Light')),
-                ShadOption(value: ThemeMode.dark,   child: Text('Dark')),
+                const SizedBox(height: 16),
+                _SettingsField(
+                  label: 'Port',
+                  child: ShadInput(
+                    controller: _port,
+                    placeholder: const Text('5678'),
+                    leading: const Icon(LucideIcons.network),
+                    enabled: cfg.baseUrlEditable,
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _SettingsField(
+                  label: 'API Key',
+                  child: ShadInput(
+                    controller: _apiKey,
+                    placeholder: const Text('Your n8n API key'),
+                    leading: const Icon(LucideIcons.lock),
+                    enabled: cfg.apiKeyEditable,
+                    obscureText: _apiKeyObscured,
+                    trailing: SizedBox.square(
+                      dimension: 24,
+                      child: OverflowBox(
+                        maxWidth: 28,
+                        maxHeight: 28,
+                        child: ShadIconButton(
+                          iconSize: 20,
+                          padding: const EdgeInsets.all(2),
+                          icon: Icon(
+                            _apiKeyObscured ? LucideIcons.eyeOff : LucideIcons.eye,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _apiKeyObscured = !_apiKeyObscured;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const ShadSeparator.horizontal(
+                  thickness: 4,
+                  margin: EdgeInsets.symmetric(horizontal: 0),
+                  radius: BorderRadius.all(Radius.circular(4)),
+                ),
+                const SizedBox(height: 24),
+                _SettingsField(
+                  label: 'Theme',
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ShadSelect<ThemeMode>(
+                      minWidth: 280,
+                      initialValue: PreferencesService.instance.themeMode,
+                      onChanged: (mode) {
+                        if (mode != null) {
+                          PreferencesService.instance.setThemeMode(mode);
+                        }
+                      },
+                      options: const [
+                        ShadOption(
+                          value: ThemeMode.system,
+                          child: Row(
+                            children: [
+                              Icon(LucideIcons.laptopMinimal, size: 16),
+                              SizedBox(width: 8),
+                              Text('System'),
+                            ],
+                          ),
+                        ),
+                        ShadOption(
+                          value: ThemeMode.light,
+                          child: Row(
+                            children: [
+                              Icon(LucideIcons.sun, size: 16),
+                              SizedBox(width: 8),
+                              Text('Light'),
+                            ],
+                          ),
+                        ),
+                        ShadOption(
+                          value: ThemeMode.dark,
+                          child: Row(
+                            children: [
+                              Icon(LucideIcons.moon, size: 16),
+                              SizedBox(width: 8),
+                              Text('Dark'),
+                            ],
+                          ),
+                        ),
+                      ],
+                      selectedOptionBuilder: (context, value) => Row(
+                        children: [
+                          Icon(
+                            switch (value) {
+                              ThemeMode.light => LucideIcons.sun,
+                              ThemeMode.dark => LucideIcons.moon,
+                              ThemeMode.system => LucideIcons.laptopMinimal,
+                            },
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            switch (value) {
+                              ThemeMode.light => 'Light',
+                              ThemeMode.dark => 'Dark',
+                              ThemeMode.system => 'System',
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const ShadSeparator.horizontal(
+                  thickness: 4,
+                  margin: EdgeInsets.symmetric(horizontal: 0),
+                  radius: BorderRadius.all(Radius.circular(4)),
+                ),
+                const SizedBox(height: 24),
+                ShadCheckbox(
+                  value: _notifications,
+                  onChanged: (v) => setState(() => _notifications = v),
+                  label: const Text('Enable notifications'),
+                ),
               ],
-              selectedOptionBuilder: (context, value) => Text(switch (value) {
-                ThemeMode.light  => 'Light',
-                ThemeMode.dark   => 'Dark',
-                ThemeMode.system => 'System',
-              }),
             ),
           ),
-          const SizedBox(height: 24),
-          const ShadSeparator.horizontal(
-            thickness: 4,
-            margin: EdgeInsets.symmetric(horizontal: 0),
-            radius: BorderRadius.all(Radius.circular(4)),
-          ),
-          const SizedBox(height: 24),
-          ShadCheckbox(
-            value: _notifications,
-            onChanged: (v) => setState(() => _notifications = v),
-            label: const Text('Enable notifications'),
+          const SizedBox(height: 32),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: ShadButton.destructive(
+              width: double.infinity,
+              onPressed: () async {
+                final navigator = Navigator.of(context);
+                final confirmed = await showShadDialog<bool>(
+                  context: context,
+                  builder: (context) => ShadDialog.alert(
+                    title: const Text('Log out?'),
+                    description: const Padding(
+                      padding: EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        'This will clear your saved URL, port, and API key from the app.',
+                      ),
+                    ),
+                    actions: [
+                      ShadButton.outline(
+                        child: const Text('Cancel'),
+                        onPressed: () => Navigator.of(context).pop(false),
+                      ),
+                      ShadButton.destructive(
+                        child: const Text('Log out'),
+                        onPressed: () => Navigator.of(context).pop(true),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmed != true) return;
+
+                await ConfigService.instance.clear();
+                if (!mounted) return;
+                navigator.pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const SetupPage()),
+                  (_) => false,
+                );
+              },
+              child: const Text('Log out'),
+            ),
           ),
         ],
       ),

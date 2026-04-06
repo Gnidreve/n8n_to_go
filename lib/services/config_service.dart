@@ -18,16 +18,22 @@ class ConfigService {
   Future<void> load() async {
     final storedBase = await _storage.read(key: _keyBaseUrl);
     final storedKey = await _storage.read(key: _keyApiKey);
+    final envBaseUrl = dotenv.env['BASE_URL'];
+    final envBasePort = dotenv.env['BASE_PORT'];
 
     _baseUrlFromStorage = storedBase != null && storedBase.isNotEmpty;
     _apiKeyFromStorage = storedKey != null && storedKey.isNotEmpty;
 
     // Secure storage takes priority over .env
     _baseUrl = _baseUrlFromStorage
-        ? storedBase
+        ? _migrateStoredBaseUrl(
+            storedBase!,
+            envBaseUrl,
+            envBasePort,
+          )
         : _composeBaseUrl(
-            dotenv.env['BASE_URL'],
-            dotenv.env['BASE_PORT'],
+            envBaseUrl,
+            envBasePort,
           );
     _apiKey = _apiKeyFromStorage ? storedKey : dotenv.env['API_KEY'];
   }
@@ -64,6 +70,55 @@ class ConfigService {
     _apiKey = apiKey;
     _baseUrlFromStorage = true;
     _apiKeyFromStorage = true;
+  }
+
+  Future<void> clear() async {
+    await Future.wait([
+      _storage.delete(key: _keyBaseUrl),
+      _storage.delete(key: _keyApiKey),
+    ]);
+    _baseUrl = null;
+    _apiKey = null;
+    _baseUrlFromStorage = false;
+    _apiKeyFromStorage = false;
+  }
+
+  String _migrateStoredBaseUrl(
+    String storedBaseUrl,
+    String? envBaseUrl,
+    String? envBasePort,
+  ) {
+    final normalizedStoredBaseUrl =
+        storedBaseUrl.trim().replaceAll(RegExp(r'/$'), '');
+    if (normalizedStoredBaseUrl.isEmpty) return normalizedStoredBaseUrl;
+
+    final storedUri = Uri.tryParse(normalizedStoredBaseUrl);
+    if (storedUri == null || storedUri.host.isEmpty) {
+      return normalizedStoredBaseUrl;
+    }
+
+    final hasExplicitStoredPort =
+        normalizedStoredBaseUrl.contains(':${storedUri.port}');
+    if (hasExplicitStoredPort) return normalizedStoredBaseUrl;
+
+    final normalizedEnvBaseUrl =
+        (envBaseUrl ?? '').trim().replaceAll(RegExp(r'/$'), '');
+    final envUri = Uri.tryParse(normalizedEnvBaseUrl);
+    if (envUri == null || envUri.host.isEmpty) {
+      return normalizedStoredBaseUrl;
+    }
+
+    final sameOriginWithoutPort =
+        storedUri.scheme == envUri.scheme && storedUri.host == envUri.host;
+    if (!sameOriginWithoutPort) return normalizedStoredBaseUrl;
+
+    final migratedBaseUrl = _composeBaseUrl(normalizedStoredBaseUrl, envBasePort);
+    if (migratedBaseUrl != normalizedStoredBaseUrl) {
+      _storage.write(key: _keyBaseUrl, value: migratedBaseUrl);
+      return migratedBaseUrl;
+    }
+
+    return normalizedStoredBaseUrl;
   }
 
   String _composeBaseUrl(String? rawBaseUrl, String? rawPort) {

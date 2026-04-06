@@ -1,3 +1,4 @@
+import 'report.dart';
 import 'post.dart';
 
 class AuditApi {
@@ -11,5 +12,11 @@ class AuditApi {
       baseUrl: baseUrl,
       apiKey: apiKey,
     );
+  }
+
+  Future<Map<String, dynamic>> report({
+    Map<String, dynamic>? body,
+  }) {
+    return postAuditReport(body: body);
   }
 }

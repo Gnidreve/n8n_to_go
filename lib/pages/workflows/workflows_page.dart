@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
-import '../../widgets/dead_filter_select.dart';
+import '../../widgets/filter_select.dart';
 import 'workflow_detail_page.dart';
 
 class WorkflowsPage extends StatefulWidget {
@@ -16,6 +16,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
   bool _loading = true;
   String? _error;
   List<dynamic> _items = [];
+  Set<String> _selectedStatuses = <String>{};
 
   @override
   void initState() {
@@ -38,8 +39,44 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
     }
   }
 
+  List<FilterSelectOption> get _filterOptions {
+    final hasPublished = _items.any((rawItem) {
+      final item = Map<String, dynamic>.from(rawItem as Map);
+      return item['active'] == true;
+    });
+    final hasUnpublished = _items.any((rawItem) {
+      final item = Map<String, dynamic>.from(rawItem as Map);
+      return item['active'] != true;
+    });
+
+    return [
+      if (hasPublished)
+        const FilterSelectOption(
+          value: 'published',
+          label: 'Published',
+        ),
+      if (hasUnpublished)
+        const FilterSelectOption(
+          value: 'unpublished',
+          label: 'Unpublished',
+        ),
+    ];
+  }
+
+  List<dynamic> get _filteredItems {
+    if (_selectedStatuses.isEmpty) return _items;
+    return _items.where((rawItem) {
+      final item = Map<String, dynamic>.from(rawItem as Map);
+      final isPublished = item['active'] == true;
+      return (isPublished && _selectedStatuses.contains('published')) ||
+          (!isPublished && _selectedStatuses.contains('unpublished'));
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final filteredItems = _filteredItems;
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -63,14 +100,24 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
                   )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
-                  itemCount: _items.length + 1,
+                  itemCount: filteredItems.length + 1,
                   separatorBuilder: (_, index) =>
                       index == 0 ? const SizedBox(height: 16) : const SizedBox(height: 12),
                   itemBuilder: (context, i) {
                     if (i == 0) {
-                      return const DeadFilterSelect();
+                      return FilterSelect(
+                        options: _filterOptions,
+                        selectedValues: _selectedStatuses,
+                        onChanged: (values) {
+                          setState(() {
+                            _selectedStatuses = values;
+                          });
+                        },
+                        searchPlaceholder: 'Search statuses',
+                        emptyLabel: 'No workflow statuses found',
+                      );
                     }
-                    final item = _items[i - 1] as Map<String, dynamic>;
+                    final item = filteredItems[i - 1] as Map<String, dynamic>;
                     final name = item['name'] as String? ?? 'Workflow';
                     final description = item['description'] as String?;
                     return Card(

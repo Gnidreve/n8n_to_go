@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import 'audit_page.dart';
 import 'workflows/workflows_page.dart';
 import 'executions/executions_page.dart';
 import 'data-tables/data_tables_page.dart';
 import 'credentials/credentials_page.dart';
 import 'settings_page.dart';
+import 'users/users_page.dart';
 
 Widget n8nAppBarTitle() => Row(
   mainAxisSize: MainAxisSize.min,
   children: [
     SvgPicture.asset('lib/assets/appbar-logo.svg', height: 22),
     const SizedBox(width: 10),
-    const Text('n8n for mobile'),
+    const Text('n8n to go'),
   ],
 );
 
@@ -20,12 +22,16 @@ class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   static final _items = [
-    (title: 'Audit', icon: LucideIcons.shieldCheck, route: null),
+    (title: 'Audit', icon: LucideIcons.shieldCheck, route: AuditPage.new),
     (title: 'Workflows', icon: LucideIcons.workflow, route: WorkflowsPage.new),
     (title: 'Executions', icon: LucideIcons.bolt, route: ExecutionsPage.new),
     (title: 'Data Tables', icon: LucideIcons.table, route: DataTablesPage.new),
-    (title: 'Credentials', icon: LucideIcons.keyRound, route: CredentialsPage.new),
-    (title: 'Users', icon: LucideIcons.users, route: null),
+    (
+      title: 'Credentials',
+      icon: LucideIcons.keyRound,
+      route: CredentialsPage.new,
+    ),
+    (title: 'Users', icon: LucideIcons.users, route: UsersPage.new),
     (title: 'Settings', icon: LucideIcons.settings, route: SettingsPage.new),
   ];
 
@@ -38,9 +44,9 @@ class HomePage extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(LucideIcons.settings),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const SettingsPage()),
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const SettingsPage())),
           ),
         ],
       ),
@@ -54,14 +60,12 @@ class HomePage extends StatelessWidget {
                 _HomeMenuCard(
                   title: item.title,
                   icon: item.icon,
-                  onTap: item.route == null
-                      ? null
-                      : () {
-                          final route = item.route!;
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => route()),
-                          );
-                        },
+                  onTap: () {
+                    final route = item.route;
+                    Navigator.of(
+                      context,
+                    ).push(MaterialPageRoute(builder: (_) => route()));
+                  },
                 ),
                 if (item != _items.last) const SizedBox(height: 12),
               ],

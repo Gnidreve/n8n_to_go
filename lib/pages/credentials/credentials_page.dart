@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../CREDENTIAL_TYPES.dart';
 import '../../widgets/credential_icon.dart';
-import '../../widgets/dead_filter_select.dart';
+import '../../widgets/filter_select.dart';
 import 'credential_detail_page.dart';
 import 'credential_type_select_page.dart';
 
@@ -18,6 +19,7 @@ class _CredentialsPageState extends State<CredentialsPage> {
   bool _loading = true;
   String? _error;
   List<dynamic> _items = [];
+  Set<String> _selectedTypes = <String>{};
 
   @override
   void initState() {
@@ -40,8 +42,44 @@ class _CredentialsPageState extends State<CredentialsPage> {
     }
   }
 
+  List<FilterSelectOption> get _filterOptions {
+    final seen = <String>{};
+    final options = <FilterSelectOption>[];
+    for (final rawItem in _items) {
+      final item = Map<String, dynamic>.from(rawItem as Map);
+      final type = item['type'] as String?;
+      if (type == null || type.isEmpty || !seen.add(type)) continue;
+      final label = credentialTypes.entries
+          .where((entry) => entry.value == type)
+          .map((entry) => entry.key)
+          .firstOrNull;
+      options.add(
+        FilterSelectOption(
+          value: type,
+          label: label ?? type,
+          leading: SizedBox.square(
+            dimension: 18,
+            child: CredentialIcon(type: type),
+          ),
+        ),
+      );
+    }
+    return options;
+  }
+
+  List<dynamic> get _filteredItems {
+    if (_selectedTypes.isEmpty) return _items;
+    return _items.where((rawItem) {
+      final item = Map<String, dynamic>.from(rawItem as Map);
+      final type = item['type'] as String?;
+      return type != null && _selectedTypes.contains(type);
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final filteredItems = _filteredItems;
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -76,23 +114,33 @@ class _CredentialsPageState extends State<CredentialsPage> {
                 )
               : ListView.separated(
                       padding: const EdgeInsets.only(top: 16, bottom: 16),
-                      itemCount: _items.isEmpty ? 2 : _items.length + 1,
+                      itemCount: filteredItems.isEmpty ? 2 : filteredItems.length + 1,
                       separatorBuilder: (_, index) =>
                           index == 0 ? const SizedBox(height: 12) : const Divider(height: 1),
                       itemBuilder: (context, i) {
                         if (i == 0) {
-                          return const Padding(
+                          return Padding(
                             padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: DeadFilterSelect(),
+                            child: FilterSelect(
+                              options: _filterOptions,
+                              selectedValues: _selectedTypes,
+                              onChanged: (values) {
+                                setState(() {
+                                  _selectedTypes = values;
+                                });
+                              },
+                              searchPlaceholder: 'Search credential types',
+                              emptyLabel: 'No credential types found',
+                            ),
                           );
                         }
-                        if (_items.isEmpty) {
+                        if (filteredItems.isEmpty) {
                           return const Padding(
                             padding: EdgeInsets.all(16),
                             child: Text('No credentials'),
                           );
                         }
-                        final item = _items[i - 1] as Map<String, dynamic>;
+                        final item = filteredItems[i - 1] as Map<String, dynamic>;
                         final name = item['name'] as String? ?? '—';
                         final type = item['type'] as String?;
                         return ListTile(
