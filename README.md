@@ -82,7 +82,7 @@ No analytics, no external tracking, no data leaves your device beyond calls to y
 - n8n chat after beta is completed
 
 > [!NOTE]
-> Supports basically everything the current n8n API allows, except features that are unavailable on freemium self-hosted instances, such as variables.
+> Support for basically everything the current n8n API allows, except features that are unavailable on freemium self-hosted instances, such as variables.
 
 ---
 

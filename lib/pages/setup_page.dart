@@ -18,6 +18,8 @@ class _SetupPageState extends State<SetupPage> {
   final _loginEmail = TextEditingController();
   final _loginPassword = TextEditingController();
   bool _saving = false;
+  bool _apiKeyObscured = true;
+  bool _loginPasswordObscured = true;
 
   @override
   void dispose() {
@@ -116,7 +118,16 @@ class _SetupPageState extends State<SetupPage> {
                                 child: ShadInput(
                                   controller: _loginPassword,
                                   placeholder: const Text('Your password'),
-                                  obscureText: true,
+                                  obscureText: _loginPasswordObscured,
+                                  trailing: _VisibilityToggle(
+                                    obscured: _loginPasswordObscured,
+                                    onPressed: () {
+                                      setState(() {
+                                        _loginPasswordObscured =
+                                            !_loginPasswordObscured;
+                                      });
+                                    },
+                                  ),
                                   enabled: false,
                                 ),
                               ),
@@ -158,7 +169,15 @@ class _SetupPageState extends State<SetupPage> {
                                 child: ShadInput(
                                   controller: _apiKey,
                                   placeholder: const Text('Your n8n API key'),
-                                  obscureText: true,
+                                  obscureText: _apiKeyObscured,
+                                  trailing: _VisibilityToggle(
+                                    obscured: _apiKeyObscured,
+                                    onPressed: () {
+                                      setState(() {
+                                        _apiKeyObscured = !_apiKeyObscured;
+                                      });
+                                    },
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 32),
@@ -206,6 +225,33 @@ class _Field extends StatelessWidget {
         Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
         child,
       ],
+    );
+  }
+}
+
+class _VisibilityToggle extends StatelessWidget {
+  const _VisibilityToggle({
+    required this.obscured,
+    required this.onPressed,
+  });
+
+  final bool obscured;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.square(
+      dimension: 24,
+      child: OverflowBox(
+        maxWidth: 28,
+        maxHeight: 28,
+        child: ShadIconButton(
+          iconSize: 20,
+          padding: const EdgeInsets.all(2),
+          icon: Icon(obscured ? LucideIcons.eyeOff : LucideIcons.eye),
+          onPressed: onPressed,
+        ),
+      ),
     );
   }
 }

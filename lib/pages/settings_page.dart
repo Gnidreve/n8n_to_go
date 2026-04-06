@@ -16,6 +16,7 @@ class _SettingsPageState extends State<SettingsPage> {
   late final TextEditingController _apiKey;
   bool _saving = false;
   bool _notifications = false;
+  bool _apiKeyObscured = true;
 
   @override
   void initState() {
@@ -88,7 +89,26 @@ class _SettingsPageState extends State<SettingsPage> {
               controller: _apiKey,
               placeholder: const Text('Your n8n API key'),
               enabled: cfg.apiKeyEditable,
-              obscureText: true,
+              obscureText: _apiKeyObscured,
+              trailing: SizedBox.square(
+                dimension: 24,
+                child: OverflowBox(
+                  maxWidth: 28,
+                  maxHeight: 28,
+                  child: ShadIconButton(
+                    iconSize: 20,
+                    padding: const EdgeInsets.all(2),
+                    icon: Icon(
+                      _apiKeyObscured ? LucideIcons.eyeOff : LucideIcons.eye,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _apiKeyObscured = !_apiKeyObscured;
+                      });
+                    },
+                  ),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 24),
