@@ -12,17 +12,32 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> {
+class _SplashPageState extends State<SplashPage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _progress;
+
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+    _progress = _controller.drive(Tween(begin: 0.0, end: 1.0));
     _init();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   Future<void> _init() async {
     await Future.wait([
       ConfigService.instance.load(),
-      Future.delayed(const Duration(seconds: 2)),
+      _controller.forward(),
     ]);
     if (!mounted) return;
     final next = ConfigService.instance.isConfigured
@@ -46,7 +61,10 @@ class _SplashPageState extends State<SplashPage> {
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.sizeOf(context).width * 0.6,
               ),
-              child: const ShadProgress(value: 0.5),
+              child: AnimatedBuilder(
+                animation: _progress,
+                builder: (context, _) => ShadProgress(value: _progress.value),
+              ),
             ),
           ],
         ),
