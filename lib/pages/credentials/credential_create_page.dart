@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../utils/app_toast.dart';
 import '../../widgets/credential_schema_form.dart';
 
 class CredentialCreatePage extends StatefulWidget {
@@ -31,9 +32,7 @@ class _CredentialCreatePageState extends State<CredentialCreatePage> {
 
   Future<void> _save() async {
     if (_name.text.trim().isEmpty) {
-      ShadToaster.of(context).show(
-        const ShadToast.destructive(title: Text('Name is required')),
-      );
+      showErrorToast(context, 'Name is required');
       return;
     }
     final formState = _schemaFormKey.currentState;
@@ -48,16 +47,12 @@ class _CredentialCreatePageState extends State<CredentialCreatePage> {
       };
       await credentials.post(body);
       if (!mounted) return;
-      ShadToaster.of(context).show(
-        const ShadToast(title: Text('Credential created')),
-      );
+      showSuccessToast(context, 'Credential created');
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ShadToaster.of(context).show(
-        ShadToast.destructive(title: const Text('Error'), description: Text(e.toString())),
-      );
+      showErrorToast(context, 'Error', description: e.toString());
     }
   }
 
@@ -66,7 +61,7 @@ class _CredentialCreatePageState extends State<CredentialCreatePage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: const Text('Create Credential'),
+        title: const Text('Add Credential'),
         leading: IconButton(
           icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(false),

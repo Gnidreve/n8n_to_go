@@ -3,6 +3,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../api/api.dart';
 import '../services/config_service.dart';
+import '../utils/app_toast.dart';
 import '../utils/url_utils.dart';
 import 'home_page.dart';
 
@@ -52,31 +53,19 @@ class _SetupPageState extends State<SetupPage> {
     final apiKey = _apiKey.text.trim();
 
     if (normalizedBaseUrl.isEmpty || apiKey.isEmpty) {
-      ShadToaster.of(context).show(
-        const ShadToast.destructive(title: Text('Please fill in both fields')),
-      );
+      showErrorToast(context, 'Please fill in both fields');
       return;
     }
 
     final baseUrlError = _validateBaseUrl(normalizedBaseUrl);
     if (baseUrlError != null) {
-      ShadToaster.of(context).show(
-        ShadToast.destructive(
-          title: const Text('Invalid base URL'),
-          description: Text(baseUrlError),
-        ),
-      );
+      showErrorToast(context, 'Invalid base URL', description: baseUrlError);
       return;
     }
 
     final portError = _validatePort(_port.text);
     if (portError != null) {
-      ShadToaster.of(context).show(
-        ShadToast.destructive(
-          title: const Text('Invalid port'),
-          description: Text(portError),
-        ),
-      );
+      showErrorToast(context, 'Invalid port', description: portError);
       return;
     }
 
@@ -91,12 +80,8 @@ class _SetupPageState extends State<SetupPage> {
 
       if (statusCode < 200 || statusCode >= 300) {
         setState(() => _saving = false);
-        ShadToaster.of(context).show(
-          ShadToast.destructive(
-            title: const Text('Connection failed'),
-            description: Text(_auditErrorMessage(statusCode)),
-          ),
-        );
+        showErrorToast(context, 'Connection failed',
+            description: _auditErrorMessage(statusCode));
         return;
       }
 
@@ -112,14 +97,9 @@ class _SetupPageState extends State<SetupPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ShadToaster.of(context).show(
-        const ShadToast.destructive(
-          title: Text('Connection failed'),
-          description: Text(
-            'Could not validate your n8n instance. Check the URL, API key, and network connection.',
-          ),
-        ),
-      );
+      showErrorToast(context, 'Connection failed',
+          description:
+              'Could not validate your n8n instance. Check the URL, API key, and network connection.');
     }
   }
 

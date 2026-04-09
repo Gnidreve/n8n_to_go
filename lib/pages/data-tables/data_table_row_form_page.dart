@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../utils/app_toast.dart';
 
 class DataTableRowFormPage extends StatefulWidget {
   const DataTableRowFormPage({
@@ -188,29 +189,18 @@ class _DataTableRowFormPageState extends State<DataTableRowFormPage> {
         filter: jsonEncode(filter),
       );
       if (!mounted) return;
-      ShadToaster.of(context).show(
-        const ShadToast(title: Text('Row deleted')),
-      );
+      showSuccessToast(context, 'Row deleted');
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       setState(() => _deleting = false);
-      ShadToaster.of(context).show(
-        ShadToast.destructive(
-          title: const Text('Error'),
-          description: Text(e.toString()),
-        ),
-      );
+      showErrorToast(context, 'Error', description: e.toString());
     }
   }
 
   Future<void> _save() async {
     if (widget.dataTableId.isEmpty) {
-      ShadToaster.of(context).show(
-        const ShadToast.destructive(
-          title: Text('Missing data table ID'),
-        ),
-      );
+      showErrorToast(context, 'Missing data table ID');
       return;
     }
 
@@ -236,23 +226,13 @@ class _DataTableRowFormPageState extends State<DataTableRowFormPage> {
       }
 
       if (!mounted) return;
-      ShadToaster.of(context).show(
-        ShadToast(
-          title: Text(
-            widget.initialRow == null ? 'Row created' : 'Row updated',
-          ),
-        ),
-      );
+      showSuccessToast(
+          context, widget.initialRow == null ? 'Row created' : 'Row updated');
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ShadToaster.of(context).show(
-        ShadToast.destructive(
-          title: const Text('Error'),
-          description: Text(e.toString()),
-        ),
-      );
+      showErrorToast(context, 'Error', description: e.toString());
     }
   }
 

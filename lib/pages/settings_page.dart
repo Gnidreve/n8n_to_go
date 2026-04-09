@@ -1,8 +1,11 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../services/config_service.dart';
 import '../services/preferences_service.dart';
+import '../services/push_notifications_service.dart';
+import '../utils/app_toast.dart';
 import '../utils/url_utils.dart';
 import 'setup_page.dart';
 
@@ -18,8 +21,10 @@ class _SettingsPageState extends State<SettingsPage> {
   late final TextEditingController _port;
   late final TextEditingController _apiKey;
   bool _saving = false;
+  bool _notificationsBusy = false;
   bool _notifications = false;
   bool _apiKeyObscured = true;
+  String? _notificationToken;
 
   @override
   void initState() {
@@ -29,6 +34,8 @@ class _SettingsPageState extends State<SettingsPage> {
     _baseUrl = TextEditingController(text: split.url);
     _port = TextEditingController(text: split.port);
     _apiKey = TextEditingController(text: cfg.displayApiKey);
+    _notifications = PreferencesService.instance.pushNotificationsEnabled;
+    _notificationToken = PreferencesService.instance.pushNotificationToken;
   }
 
   @override
@@ -43,23 +50,13 @@ class _SettingsPageState extends State<SettingsPage> {
     final baseUrl = buildBaseUrl(_baseUrl.text, _port.text);
     final baseUrlError = _validateBaseUrl(baseUrl);
     if (baseUrlError != null) {
-      ShadToaster.of(context).show(
-        ShadToast.destructive(
-          title: const Text('Invalid URL'),
-          description: Text(baseUrlError),
-        ),
-      );
+      showErrorToast(context, 'Invalid URL', description: baseUrlError);
       return;
     }
 
     final portError = _validatePort(_port.text);
     if (portError != null) {
-      ShadToaster.of(context).show(
-        ShadToast.destructive(
-          title: const Text('Invalid port'),
-          description: Text(portError),
-        ),
-      );
+      showErrorToast(context, 'Invalid port', description: portError);
       return;
     }
 
@@ -70,9 +67,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
     if (!mounted) return;
     setState(() => _saving = false);
-    ShadToaster.of(context).show(
-      const ShadToast(title: Text('Settings saved')),
-    );
+    showSuccessToast(context, 'Settings saved');
   }
 
   String? _validateBaseUrl(String value) {
@@ -99,9 +94,69 @@ class _SettingsPageState extends State<SettingsPage> {
     return null;
   }
 
+  Future<void> _setNotificationsEnabled(bool enabled) async {
+    setState(() => _notificationsBusy = true);
+
+    try {
+      if (enabled) {
+        final result = await PushNotificationsService.instance
+            .enableNotifications();
+        if (!mounted) return;
+
+        setState(() {
+          _notifications = result.enabled;
+          _notificationToken = result.token;
+        });
+
+        if (result.enabled) {
+          showSuccessToast(context, 'Push notifications enabled');
+        } else {
+          showErrorToast(
+            context,
+            'Push notifications unavailable',
+            description: result.message,
+          );
+        }
+      } else {
+        await PushNotificationsService.instance.disableNotifications();
+        if (!mounted) return;
+
+        setState(() {
+          _notifications = false;
+          _notificationToken = null;
+        });
+        showInfoToast(context, 'Push notifications disabled');
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _notifications = PreferencesService.instance.pushNotificationsEnabled;
+        _notificationToken = PreferencesService.instance.pushNotificationToken;
+      });
+      showErrorToast(
+        context,
+        'Push notifications failed',
+        description: error.toString(),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _notificationsBusy = false);
+      }
+    }
+  }
+
+  Future<void> _copyNotificationToken() async {
+    final token = _notificationToken;
+    if (token == null || token.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: token));
+    if (!mounted) return;
+    showInfoToast(context, 'Device token copied');
+  }
+
   @override
   Widget build(BuildContext context) {
     final cfg = ConfigService.instance;
+    final pushService = PushNotificationsService.instance;
 
     return Scaffold(
       appBar: AppBar(
@@ -123,13 +178,15 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ],
       ),
-      body: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
+      body: SafeArea(
+        top: false,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
                 _SettingsField(
                   label: 'URL',
                   child: ShadInput(
@@ -169,7 +226,9 @@ class _SettingsPageState extends State<SettingsPage> {
                           iconSize: 20,
                           padding: const EdgeInsets.all(2),
                           icon: Icon(
-                            _apiKeyObscured ? LucideIcons.eyeOff : LucideIcons.eye,
+                            _apiKeyObscured
+                                ? LucideIcons.eyeOff
+                                : LucideIcons.eye,
                           ),
                           onPressed: () {
                             setState(() {
@@ -182,11 +241,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                const ShadSeparator.horizontal(
-                  thickness: 4,
-                  margin: EdgeInsets.symmetric(horizontal: 0),
-                  radius: BorderRadius.all(Radius.circular(4)),
-                ),
+                const ShadSeparator.horizontal(),
                 const SizedBox(height: 24),
                 _SettingsField(
                   label: 'Theme',
@@ -234,85 +289,153 @@ class _SettingsPageState extends State<SettingsPage> {
                       ],
                       selectedOptionBuilder: (context, value) => Row(
                         children: [
-                          Icon(
-                            switch (value) {
-                              ThemeMode.light => LucideIcons.sun,
-                              ThemeMode.dark => LucideIcons.moon,
-                              ThemeMode.system => LucideIcons.laptopMinimal,
-                            },
-                            size: 16,
-                          ),
+                          Icon(switch (value) {
+                            ThemeMode.light => LucideIcons.sun,
+                            ThemeMode.dark => LucideIcons.moon,
+                            ThemeMode.system => LucideIcons.laptopMinimal,
+                          }, size: 16),
                           const SizedBox(width: 8),
-                          Text(
-                            switch (value) {
-                              ThemeMode.light => 'Light',
-                              ThemeMode.dark => 'Dark',
-                              ThemeMode.system => 'System',
-                            },
-                          ),
+                          Text(switch (value) {
+                            ThemeMode.light => 'Light',
+                            ThemeMode.dark => 'Dark',
+                            ThemeMode.system => 'System',
+                          }),
                         ],
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 24),
-                const ShadSeparator.horizontal(
-                  thickness: 4,
-                  margin: EdgeInsets.symmetric(horizontal: 0),
-                  radius: BorderRadius.all(Radius.circular(4)),
-                ),
+                const ShadSeparator.horizontal(),
                 const SizedBox(height: 24),
-                ShadCheckbox(
-                  value: _notifications,
-                  onChanged: (v) => setState(() => _notifications = v),
-                  label: const Text('Enable notifications'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: ShadButton.destructive(
-              width: double.infinity,
-              onPressed: () async {
-                final navigator = Navigator.of(context);
-                final confirmed = await showShadDialog<bool>(
-                  context: context,
-                  builder: (context) => ShadDialog.alert(
-                    title: const Text('Log out?'),
-                    description: const Padding(
-                      padding: EdgeInsets.only(bottom: 8),
-                      child: Text(
-                        'This will clear your saved URL, port, and API key from the app.',
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Push Notifications',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Enable Firebase Cloud Messaging for this device.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: ShadTheme.of(
+                                context,
+                              ).colorScheme.mutedForeground,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    actions: [
-                      ShadButton.outline(
-                        child: const Text('Cancel'),
-                        onPressed: () => Navigator.of(context).pop(false),
-                      ),
-                      ShadButton.destructive(
-                        child: const Text('Log out'),
-                        onPressed: () => Navigator.of(context).pop(true),
-                      ),
-                    ],
+                    const SizedBox(width: 16),
+                    _notificationsBusy
+                        ? const SizedBox.square(
+                            dimension: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Switch.adaptive(
+                            value: _notifications,
+                            onChanged: _setNotificationsEnabled,
+                          ),
+                  ],
+                ),
+                if (!pushService.isAvailable) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    pushService.initializationError ??
+                        'Firebase is not configured yet. Add google-services.json to finish push setup.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: ShadTheme.of(context).colorScheme.mutedForeground,
+                    ),
                   ),
-                );
-
-                if (confirmed != true) return;
-
-                await ConfigService.instance.clear();
-                if (!mounted) return;
-                navigator.pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const SetupPage()),
-                  (_) => false,
-                );
-              },
-              child: const Text('Log out'),
+                ],
+                if (_notificationToken != null &&
+                    _notificationToken!.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  _SettingsField(
+                    label: 'Device Token',
+                    child: ShadCard(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SelectableText(
+                            _notificationToken!,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: ShadButton.outline(
+                              onPressed: _copyNotificationToken,
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(LucideIcons.copy, size: 14),
+                                  SizedBox(width: 8),
+                                  Text('Copy token'),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 32),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: ShadButton.destructive(
+                width: double.infinity,
+                onPressed: () async {
+                  final navigator = Navigator.of(context);
+                  final confirmed = await showShadDialog<bool>(
+                    context: context,
+                    builder: (context) => ShadDialog.alert(
+                      title: const Text('Log out?'),
+                      description: const Padding(
+                        padding: EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          'This will clear your saved URL, port, and API key from the app.',
+                        ),
+                      ),
+                      actions: [
+                        ShadButton.outline(
+                          child: const Text('Cancel'),
+                          onPressed: () => Navigator.of(context).pop(false),
+                        ),
+                        ShadButton.destructive(
+                          child: const Text('Log out'),
+                          onPressed: () => Navigator.of(context).pop(true),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirmed != true) return;
+
+                  await ConfigService.instance.clear();
+                  if (!mounted) return;
+                  navigator.pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const SetupPage()),
+                    (_) => false,
+                  );
+                },
+                child: const Text('Log out'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

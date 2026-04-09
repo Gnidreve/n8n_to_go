@@ -7,10 +7,11 @@
 ## Features
 
 - **Workflows** — list all workflows, view details and execution history per workflow
-- **Executions** — monitor recent executions across all workflows
+- **Executions** — monitor recent executions across all workflows, inspect execution details, and retry failed runs
 - **Data Tables** — browse n8n data tables
 - **Credentials** — list, inspect, create, update, and delete credentials with schema-driven create/edit form
-- **Settings** — configure your instance connection at runtime
+- **Settings** — configure your instance connection, theme, and push notifications at runtime
+- **Push Notifications** — enable FCM for the current Android device, copy the device token, receive foreground notifications in-app, and open failed execution details from notification taps
 
 ---
 
@@ -44,18 +45,30 @@ flutter pub get
 flutter run
 ```
 
+### Firebase Cloud Messaging setup
+
+Push notifications are Android-first and require your own Firebase project.
+
+1. Add your Firebase Android app config as `android/app/google-services.json`
+2. Open the app, go to `Settings`, and enable `Push Notifications`
+3. Copy the generated device token and use it in your n8n FCM request body
+4. Send a test notification from n8n to verify delivery
+
 ---
 
 **Transparency — where data is stored:**
 
 | What                    | How                                         | Where in code                                                              |
 | ----------------------- | ------------------------------------------- | -------------------------------------------------------------------------- |
-| Base URL & API Key      | `flutter_secure_storage` (Android Keystore) | [`lib/services/config_service.dart`](lib/services/config_service.dart#L8)  |
-| Config resolution logic | `ConfigService.load()`                      | [`lib/services/config_service.dart`](lib/services/config_service.dart#L20) |
-| First-launch gate       | `SplashPage._init()`                        | [`lib/pages/splash_page.dart`](lib/pages/splash_page.dart#L18)             |
+| Base URL & API Key      | `flutter_secure_storage` (Android Keystore) | [`lib/services/config_service.dart`](lib/services/config_service.dart#L11) |
+| Config resolution logic | `ConfigService.load()`                      | [`lib/services/config_service.dart`](lib/services/config_service.dart#L18) |
+| Push notifications flag | `shared_preferences`                        | [`lib/services/preferences_service.dart`](lib/services/preferences_service.dart#L43) |
+| FCM device token        | `shared_preferences`                        | [`lib/services/preferences_service.dart`](lib/services/preferences_service.dart#L50) |
+| Push setup and handlers | `PushNotificationsService`                  | [`lib/services/push_notifications_service.dart`](lib/services/push_notifications_service.dart#L52) |
+| First-launch gate       | `SplashPage._init()`                        | [`lib/pages/splash_page.dart`](lib/pages/splash_page.dart#L37)             |
 | Setup screen            | `SetupPage`                                 | [`lib/pages/setup_page.dart`](lib/pages/setup_page.dart)                   |
 
-No analytics, no external tracking, no data leaves your device beyond calls to your own n8n instance.
+No analytics, no external tracking, and no device token leaves your phone unless you explicitly copy it into your own n8n workflow.
 
 ---
 
@@ -67,6 +80,8 @@ No analytics, no external tracking, no data leaves your device beyond calls to y
 | UI components     | [shadcn_ui](https://pub.dev/packages/shadcn_ui) |
 | HTTP              | `package:http`                                  |
 | Secure storage    | `flutter_secure_storage`                        |
+| Local preferences | `shared_preferences`                            |
+| Push notifications| `firebase_core`, `firebase_messaging`           |
 | Build-time config | `flutter_dotenv`                                |
 
 ---

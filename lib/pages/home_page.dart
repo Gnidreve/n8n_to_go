@@ -14,7 +14,7 @@ Widget n8nAppBarTitle() => Row(
   children: [
     SvgPicture.asset('lib/assets/appbar-logo.svg', height: 22),
     const SizedBox(width: 10),
-    const Text('n8n 2 go'),
+    const Text('n8n to go'),
   ],
 );
 
@@ -22,17 +22,48 @@ class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   static final _items = [
-    (title: 'Audit', icon: LucideIcons.shieldCheck, route: AuditPage.new),
-    (title: 'Workflows', icon: LucideIcons.workflow, route: WorkflowsPage.new),
-    (title: 'Executions', icon: LucideIcons.bolt, route: ExecutionsPage.new),
-    (title: 'Data Tables', icon: LucideIcons.table, route: DataTablesPage.new),
+    (
+      title: 'Audit',
+      subtitle: 'Check access and health',
+      icon: LucideIcons.shieldCheck,
+      route: AuditPage.new,
+    ),
+    (
+      title: 'Workflows',
+      subtitle: 'Browse your workflows',
+      icon: LucideIcons.workflow,
+      route: WorkflowsPage.new,
+    ),
+    (
+      title: 'Executions',
+      subtitle: 'Inspect recent executions',
+      icon: LucideIcons.bolt,
+      route: ExecutionsPage.new,
+    ),
+    (
+      title: 'Data Tables',
+      subtitle: 'View tables, rows, and fields',
+      icon: LucideIcons.table,
+      route: DataTablesPage.new,
+    ),
     (
       title: 'Credentials',
+      subtitle: 'Manage your secret keys',
       icon: LucideIcons.keyRound,
       route: CredentialsPage.new,
     ),
-    (title: 'Users', icon: LucideIcons.users, route: UsersPage.new),
-    (title: 'Settings', icon: LucideIcons.settings, route: SettingsPage.new),
+    (
+      title: 'Users',
+      subtitle: 'See user details',
+      icon: LucideIcons.users,
+      route: UsersPage.new,
+    ),
+    (
+      title: 'Settings',
+      subtitle: 'Manage your app settings',
+      icon: LucideIcons.settings,
+      route: SettingsPage.new,
+    ),
   ];
 
   @override
@@ -41,14 +72,6 @@ class HomePage extends StatelessWidget {
       appBar: AppBar(
         centerTitle: true,
         title: n8nAppBarTitle(),
-        actions: [
-          IconButton(
-            icon: const Icon(LucideIcons.settings),
-            onPressed: () => Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const SettingsPage())),
-          ),
-        ],
       ),
       body: SafeArea(
         top: false,
@@ -59,6 +82,7 @@ class HomePage extends StatelessWidget {
               for (final item in _items) ...[
                 _HomeMenuCard(
                   title: item.title,
+                  subtitle: item.subtitle,
                   icon: item.icon,
                   onTap: () {
                     final route = item.route;
@@ -67,7 +91,7 @@ class HomePage extends StatelessWidget {
                     ).push(MaterialPageRoute(builder: (_) => route()));
                   },
                 ),
-                if (item != _items.last) const SizedBox(height: 12),
+                if (item != _items.last) const SizedBox(height: 8),
               ],
             ],
           ),
@@ -80,11 +104,13 @@ class HomePage extends StatelessWidget {
 class _HomeMenuCard extends StatelessWidget {
   const _HomeMenuCard({
     required this.title,
+    required this.subtitle,
     required this.icon,
     required this.onTap,
   });
 
   final String title;
+  final String subtitle;
   final IconData icon;
   final VoidCallback? onTap;
 
@@ -110,15 +136,28 @@ class _HomeMenuCard extends StatelessWidget {
               ),
               const SizedBox(width: 14),
               Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: onTap == null
-                        ? theme.colorScheme.mutedForeground
-                        : theme.colorScheme.foreground,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: onTap == null
+                            ? theme.colorScheme.mutedForeground
+                            : theme.colorScheme.foreground,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: theme.colorScheme.mutedForeground,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Icon(

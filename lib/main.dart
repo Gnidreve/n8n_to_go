@@ -5,6 +5,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'pages/splash_page.dart';
 import 'services/preferences_service.dart';
+import 'services/push_notifications_service.dart';
 import 'styles.dart';
 
 // ── Entry ─────────────────────────────────────────────────────────────────────
@@ -13,6 +14,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load();
   await PreferencesService.instance.load();
+  await PushNotificationsService.instance.initialize();
   runApp(const MainApp());
 }
 
@@ -30,6 +32,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     PreferencesService.instance.addListener(_onPrefsChanged);
     _applySystemUI();
+    PushNotificationsService.instance.configureNotificationNavigation();
   }
 
   @override
@@ -52,7 +55,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     final mode = PreferencesService.instance.themeMode;
     final platformDark =
         WidgetsBinding.instance.platformDispatcher.platformBrightness ==
-            Brightness.dark;
+        Brightness.dark;
     final isDark =
         mode == ThemeMode.dark || (mode == ThemeMode.system && platformDark);
 
@@ -76,6 +79,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return ShadApp(
+      navigatorKey: appNavigatorKey,
       theme: appTheme,
       darkTheme: appDarkTheme,
       themeMode: PreferencesService.instance.themeMode,
@@ -87,6 +91,18 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             surfaceTintColor: Colors.transparent,
             elevation: 0,
             scrolledUnderElevation: 0,
+            titleTextStyle:
+                theme.appBarTheme.titleTextStyle?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ) ??
+                TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: shadTheme.colorScheme.foreground,
+                ),
+            shape: Border(
+              bottom: BorderSide(color: shadTheme.colorScheme.border, width: 1),
+            ),
           ),
         );
       },

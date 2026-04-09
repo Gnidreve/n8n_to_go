@@ -1,4 +1,4 @@
-package com.example.flutter_shadcn
+package com.wasauchimmer.n8n_mobile
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider

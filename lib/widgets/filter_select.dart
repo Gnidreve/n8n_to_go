@@ -46,9 +46,10 @@ class _FilterSelectState extends State<FilterSelect> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+
     return ShadSelect<String>.multipleWithSearch(
       minWidth: 240,
-      maxWidth: 360,
       closeOnSelect: false,
       allowDeselection: true,
       placeholder: const SizedBox.shrink(),
@@ -80,14 +81,14 @@ class _FilterSelectState extends State<FilterSelect> {
         ),
       ],
       selectedOptionsBuilder: (context, values) {
-        if (values.isEmpty) return const SizedBox.shrink();
-        final labels = widget.options
-            .where((option) => values.contains(option.value))
-            .map((option) => option.label)
-            .join(', ');
-        return Text(labels);
+        return Text(
+          '${_spellOutCount(values.length)} selected',
+          style: TextStyle(color: theme.colorScheme.mutedForeground),
+        );
       },
       initialValues: widget.selectedValues,
     );
   }
 }
+
+String _spellOutCount(int count) => count.toString();

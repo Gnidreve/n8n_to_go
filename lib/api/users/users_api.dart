@@ -1,6 +1,7 @@
 import 'delete.dart';
 import 'get.dart';
 import 'get_all.dart';
+import 'patch.dart';
 
 class UsersApi {
   const UsersApi();
@@ -27,6 +28,13 @@ class UsersApi {
       id,
       includeRole: includeRole,
     );
+  }
+
+  Future<Map<String, dynamic>> patch(
+    String id,
+    Map<String, dynamic> body,
+  ) {
+    return patchUser(id, body);
   }
 
   Future<void> delete(String id) {

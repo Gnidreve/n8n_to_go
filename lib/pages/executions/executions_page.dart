@@ -3,6 +3,8 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
 import '../../utils/execution_formatters.dart';
+import 'execution_detail_page.dart';
+
 class ExecutionsPage extends StatefulWidget {
   const ExecutionsPage({super.key});
 
@@ -14,6 +16,7 @@ class _ExecutionsPageState extends State<ExecutionsPage> {
   bool _loading = true;
   String? _error;
   List<dynamic> _items = [];
+  String _activeTab = 'finished';
 
   @override
   void initState() {
@@ -22,7 +25,10 @@ class _ExecutionsPageState extends State<ExecutionsPage> {
   }
 
   Future<void> _fetch() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final res = await executions.getAll();
       if (!mounted) return;
@@ -32,7 +38,10 @@ class _ExecutionsPageState extends State<ExecutionsPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _loading = false; _error = e.toString(); });
+      setState(() {
+        _loading = false;
+        _error = e.toString();
+      });
     }
   }
 
@@ -48,106 +57,210 @@ class _ExecutionsPageState extends State<ExecutionsPage> {
           icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.refreshCw),
+            onPressed: _loading ? null : _fetch,
+          ),
+        ],
       ),
       body: SafeArea(
         top: false,
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      'Error: $_error',
-                      style: TextStyle(
-                        color: theme.colorScheme.destructive,
+            ? SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Error: $_error',
+                  style: TextStyle(color: theme.colorScheme.destructive),
+                ),
+              )
+            : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: ShadTabs<String>(
+                      value: _activeTab,
+                      onChanged: (v) => setState(() => _activeTab = v),
+                      tabs: const [
+                        ShadTab(
+                          value: 'finished',
+                          content: SizedBox.shrink(),
+                          child: Text('Finished'),
+                        ),
+                        ShadTab(
+                          value: 'pending',
+                          content: SizedBox.shrink(),
+                          child: Text('Pending'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: _activeTab == 'finished'
+                        ? _FinishedList(items: _items, onRefresh: _fetch)
+                        : _PendingList(onRefresh: _fetch),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+class _FinishedList extends StatelessWidget {
+  const _FinishedList({required this.items, required this.onRefresh});
+
+  final List<dynamic> items;
+  final Future<void> Function() onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: items.isEmpty
+          ? ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Text(
+                  'No executions',
+                  style: TextStyle(color: theme.colorScheme.mutedForeground),
+                ),
+              ],
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: items.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
+              itemBuilder: (context, i) {
+                final item = Map<String, dynamic>.from(items[i] as Map);
+                return _ExecutionCard(item: item, onReload: onRefresh);
+              },
+            ),
+    );
+  }
+}
+
+class _PendingList extends StatelessWidget {
+  const _PendingList({required this.onRefresh});
+
+  final Future<void> Function() onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Text(
+            'No pending executions',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: theme.colorScheme.mutedForeground),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExecutionCard extends StatelessWidget {
+  const _ExecutionCard({required this.item, required this.onReload});
+
+  final Map<String, dynamic> item;
+  final Future<void> Function() onReload;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final startedAt = parseExecutionDate(item['startedAt'] ?? item['createdAt']);
+    final isError = isExecutionError(item);
+    final accent = isError ? const Color(0xFFF87171) : const Color(0xFF86EFAC);
+    final executionId = '${item['id'] ?? ''}';
+
+    return ShadCard(
+      padding: EdgeInsets.zero,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: executionId.isEmpty
+            ? null
+            : () async {
+                final reload = await Navigator.of(context).push<bool>(
+                  MaterialPageRoute(
+                    builder: (_) => ExecutionDetailPage(
+                      executionId: executionId,
+                      initialExecution: item,
+                    ),
+                  ),
+                );
+                if (reload == true) await onReload();
+              },
+        child: Row(
+          children: [
+            Container(
+              width: 4,
+              height: 84,
+              decoration: BoxDecoration(
+                color: accent,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(6),
+                  bottomLeft: Radius.circular(6),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      formatExecutionDateTime(startedAt),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _items.isEmpty ? 1 : _items.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
-                    itemBuilder: (context, i) {
-                      if (_items.isEmpty) return const Text('No executions');
-                      final item = Map<String, dynamic>.from(_items[i] as Map);
-                      final startedAt = parseExecutionDate(
-                        item['startedAt'] ?? item['createdAt'],
-                      );
-                      final isError = isExecutionError(item);
-                      final accent = isError
-                          ? const Color(0xFFF87171)
-                          : const Color(0xFF86EFAC);
-
-                      return ShadCard(
-                        padding: EdgeInsets.zero,
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 4,
-                              height: 84,
-                              decoration: BoxDecoration(
-                                color: accent,
-                                borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(6),
-                                  bottomLeft: Radius.circular(6),
-                                ),
-                              ),
+                    const SizedBox(height: 4),
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: executionStatusLabel(item),
+                            style: TextStyle(
+                              color: isError
+                                  ? const Color(0xFFF87171)
+                                  : const Color(0xFF86EFAC),
+                              fontWeight: FontWeight.w600,
                             ),
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      formatExecutionDateTime(startedAt),
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text.rich(
-                                      TextSpan(
-                                        children: [
-                                          TextSpan(
-                                            text: executionStatusLabel(item),
-                                            style: TextStyle(
-                                              color: isError
-                                                  ? const Color(0xFFF87171)
-                                                  : const Color(0xFF86EFAC),
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text: ' in ${executionDurationLabel(item)}',
-                                            style: TextStyle(
-                                              color: theme.colorScheme.mutedForeground,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                          ),
+                          TextSpan(
+                            text: ' in ${executionDurationLabel(item)}',
+                            style: TextStyle(
+                              color: theme.colorScheme.mutedForeground,
                             ),
-                            if (isError)
-                              const Padding(
-                                padding: EdgeInsets.only(right: 20),
-                                child: Icon(
-                                  LucideIcons.refreshCw,
-                                  size: 18,
-                                ),
-                              ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(right: 20),
+              child: Icon(LucideIcons.chevronRight, size: 18),
+            ),
+          ],
+        ),
       ),
     );
   }

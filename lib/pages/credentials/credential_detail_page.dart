@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../utils/app_toast.dart';
 import '../../widgets/credential_schema_form.dart';
 
 class CredentialDetailPage extends StatefulWidget {
@@ -50,16 +51,12 @@ class _CredentialDetailPageState extends State<CredentialDetailPage> {
       };
       await credentials.patch(_id, body);
       if (!mounted) return;
-      ShadToaster.of(context).show(
-        const ShadToast(title: Text('Credential saved')),
-      );
+      showSuccessToast(context, 'Credential saved');
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ShadToaster.of(context).show(
-        ShadToast.destructive(title: const Text('Error'), description: Text(e.toString())),
-      );
+      showErrorToast(context, 'Error', description: e.toString());
     }
   }
 
@@ -86,14 +83,12 @@ class _CredentialDetailPageState extends State<CredentialDetailPage> {
     try {
       await credentials.delete(_id);
       if (!mounted) return;
-      ShadToaster.of(context).show(const ShadToast(title: Text('Credential deleted')));
+      showSuccessToast(context, 'Credential deleted');
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       setState(() => _deleting = false);
-      ShadToaster.of(context).show(
-        ShadToast.destructive(title: const Text('Error'), description: Text(e.toString())),
-      );
+      showErrorToast(context, 'Error', description: e.toString());
     }
   }
 
@@ -104,18 +99,12 @@ class _CredentialDetailPageState extends State<CredentialDetailPage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text(_name.text.isNotEmpty ? _name.text : 'Credential'),
+        title: const Text('Edit Credential'),
         leading: IconButton(
           icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(false),
         ),
         actions: [
-          IconButton(
-            icon: _deleting
-                ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(LucideIcons.trash2),
-            onPressed: _deleting ? null : _delete,
-          ),
           IconButton(
             icon: _saving
                 ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
@@ -129,11 +118,6 @@ class _CredentialDetailPageState extends State<CredentialDetailPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _Row('ID', c['id'] as String? ?? '—'),
-            _Row('Type', _type),
-            _Row('Created', c['createdAt'] as String? ?? '—'),
-            _Row('Updated', c['updatedAt'] as String? ?? '—'),
-            const SizedBox(height: 24),
             _Field(
               label: 'Name',
               child: ShadInput(controller: _name),
@@ -144,6 +128,22 @@ class _CredentialDetailPageState extends State<CredentialDetailPage> {
             const Text('Credential data', style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             CredentialSchemaForm(key: _schemaFormKey, credentialType: _type),
+            const SizedBox(height: 24),
+            const ShadSeparator.horizontal(),
+            const SizedBox(height: 16),
+            _Row('Created', c['createdAt'] as String? ?? '—'),
+            _Row('Updated', c['updatedAt'] as String? ?? '—'),
+            const SizedBox(height: 24),
+            ShadButton.destructive(
+              width: double.infinity,
+              onPressed: _deleting ? null : _delete,
+              child: _deleting
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Delete credential'),
+            ),
           ],
         ),
       ),

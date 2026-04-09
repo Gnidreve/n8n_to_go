@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../utils/app_toast.dart';
 
 class UserDetailPage extends StatefulWidget {
   const UserDetailPage({
@@ -19,7 +20,11 @@ class UserDetailPage extends StatefulWidget {
 
 class _UserDetailPageState extends State<UserDetailPage> {
   late Map<String, dynamic> _user;
+  late final TextEditingController _firstName;
+  late final TextEditingController _lastName;
+  late final TextEditingController _email;
   bool _loading = true;
+  bool _saving = false;
   bool _deleting = false;
   String? _error;
 
@@ -27,7 +32,24 @@ class _UserDetailPageState extends State<UserDetailPage> {
   void initState() {
     super.initState();
     _user = widget.initialUser;
+    _firstName = TextEditingController(
+      text: widget.initialUser['firstName'] as String? ?? '',
+    );
+    _lastName = TextEditingController(
+      text: widget.initialUser['lastName'] as String? ?? '',
+    );
+    _email = TextEditingController(
+      text: widget.initialUser['email'] as String? ?? '',
+    );
     _fetch();
+  }
+
+  @override
+  void dispose() {
+    _firstName.dispose();
+    _lastName.dispose();
+    _email.dispose();
+    super.dispose();
   }
 
   Future<void> _fetch() async {
@@ -36,6 +58,9 @@ class _UserDetailPageState extends State<UserDetailPage> {
       if (!mounted) return;
       setState(() {
         _user = user;
+        _firstName.text = user['firstName'] as String? ?? '';
+        _lastName.text = user['lastName'] as String? ?? '';
+        _email.text = user['email'] as String? ?? '';
         _loading = false;
         _error = null;
       });
@@ -45,6 +70,25 @@ class _UserDetailPageState extends State<UserDetailPage> {
         _loading = false;
         _error = e.toString();
       });
+    }
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    try {
+      await users.patch(widget.userId, {
+        'firstName': _firstName.text.trim(),
+        'lastName': _lastName.text.trim(),
+        'email': _email.text.trim(),
+      });
+      if (!mounted) return;
+      setState(() => _saving = false);
+      showSuccessToast(context, 'User saved');
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      showErrorToast(context, 'Error', description: e.toString());
     }
   }
 
@@ -76,42 +120,34 @@ class _UserDetailPageState extends State<UserDetailPage> {
     try {
       await users.delete(widget.userId);
       if (!mounted) return;
-      ShadToaster.of(context).show(
-        const ShadToast(title: Text('User deleted')),
-      );
+      showSuccessToast(context, 'User deleted');
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       setState(() => _deleting = false);
-      ShadToaster.of(context).show(
-        ShadToast.destructive(
-          title: const Text('Error'),
-          description: Text(e.toString()),
-        ),
-      );
+      showErrorToast(context, 'Error', description: e.toString());
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final email = _user['email'] as String? ?? 'User';
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text(email),
+        title: const Text('Edit User'),
         leading: IconButton(
           icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
           IconButton(
-            icon: _deleting
+            icon: _saving
                 ? const SizedBox.square(
                     dimension: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(LucideIcons.trash2),
-            onPressed: _loading || _deleting ? null : _delete,
+                : const Icon(LucideIcons.check),
+            onPressed: _loading || _saving ? null : _save,
           ),
         ],
       ),
@@ -127,23 +163,50 @@ class _UserDetailPageState extends State<UserDetailPage> {
                 : ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
-                      ShadCard(
-                        title: const Text('User'),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 16),
-                            _DetailRow('Email', _user['email']?.toString() ?? '—'),
-                            _DetailRow('First name', _user['firstName']?.toString() ?? '—'),
-                            _DetailRow('Last name', _user['lastName']?.toString() ?? '—'),
-                            _DetailRow(
-                              'Pending',
-                              _user['isPending'] == true ? 'Yes' : 'No',
-                            ),
-                            _DetailRow('Role', _user['role']?.toString() ?? '—'),
-                            _DetailRow('Created', _user['createdAt']?.toString() ?? '—'),
-                            _DetailRow('Updated', _user['updatedAt']?.toString() ?? '—'),
-                          ],
+                      _Field(
+                        label: 'First name',
+                        child: ShadInput(
+                          controller: _firstName,
+                          placeholder: const Text('First name'),
                         ),
+                      ),
+                      const SizedBox(height: 16),
+                      _Field(
+                        label: 'Last name',
+                        child: ShadInput(
+                          controller: _lastName,
+                          placeholder: const Text('Last name'),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _Field(
+                        label: 'Email',
+                        child: ShadInput(
+                          controller: _email,
+                          placeholder: const Text('Email'),
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _Field(
+                        label: 'Role',
+                        child: ShadInput(
+                          initialValue: _user['role'] as String? ?? '—',
+                          enabled: false,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      ShadButton.destructive(
+                        width: double.infinity,
+                        onPressed: _deleting ? null : _delete,
+                        child: _deleting
+                            ? const SizedBox.square(
+                                dimension: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Delete user'),
                       ),
                     ],
                   ),
@@ -152,29 +215,21 @@ class _UserDetailPageState extends State<UserDetailPage> {
   }
 }
 
-class _DetailRow extends StatelessWidget {
-  const _DetailRow(this.label, this.value);
+class _Field extends StatelessWidget {
+  const _Field({required this.label, required this.child});
 
   final String label;
-  final String value;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 110,
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-          Expanded(child: Text(value)),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 6,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        child,
+      ],
     );
   }
 }

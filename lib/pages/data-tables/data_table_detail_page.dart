@@ -43,8 +43,6 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
         dataTables.rows.getAll(
           widget.tableId,
           limit: 100,
-          sortBy: 'createdAt:desc',
-          search: '',
         ),
       ]);
       if (!mounted) return;
@@ -268,76 +266,21 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
               )
             else
               ShadCard(
+                padding: EdgeInsets.zero,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
                       minWidth: MediaQuery.sizeOf(context).width - 64,
                     ),
-                    child: ShadTable.list(
-                      header: labels
-                          .map(
-                            (label) => ShadTableCell.header(
-                              alignment: Alignment.centerRight,
-                              child: Text(label, textAlign: TextAlign.right),
-                            ),
-                          )
-                          .toList(),
-                      children: rows.isEmpty
-                          ? [
-                              labels
-                                  .map(
-                                    (_) => const ShadTableCell(
-                                      alignment: Alignment.centerRight,
-                                      child: Text(
-                                        '—',
-                                        textAlign: TextAlign.right,
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
-                            ]
-                          : rows
-                              .asMap()
-                              .entries
-                              .map(
-                                (entry) => entry.value
-                                    .map(
-                                      (value) => ShadTableCell(
-                                        alignment: Alignment.centerRight,
-                                        child: GestureDetector(
-                                          behavior: HitTestBehavior.opaque,
-                                          onTap: () async {
-                                            final reload =
-                                                await Navigator.of(context).push<bool>(
-                                              MaterialPageRoute(
-                                                builder: (_) => DataTableRowFormPage(
-                                                  title: 'Edit row',
-                                                  dataTableId: widget.tableId,
-                                                  columns: _resolvedColumns,
-                                                  initialRow: _resolvedRow(
-                                                    sourceRows[entry.key],
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                            if (reload == true) await _fetch();
-                                          },
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 2,
-                                            ),
-                                            child: Text(
-                                              value,
-                                              textAlign: TextAlign.right,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
-                              )
-                              .toList(),
+                    child: _DataTable(
+                      labels: labels,
+                      rows: rows,
+                      sourceRows: sourceRows,
+                      resolvedColumns: _resolvedColumns,
+                      tableId: widget.tableId,
+                      resolveRow: _resolvedRow,
+                      onReload: _fetch,
                     ),
                   ),
                 ),
@@ -345,6 +288,107 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _DataTable extends StatelessWidget {
+  const _DataTable({
+    required this.labels,
+    required this.rows,
+    required this.sourceRows,
+    required this.resolvedColumns,
+    required this.tableId,
+    required this.resolveRow,
+    required this.onReload,
+  });
+
+  final List<String> labels;
+  final List<List<String>> rows;
+  final List<Map<String, dynamic>> sourceRows;
+  final List<Map<String, dynamic>> resolvedColumns;
+  final String tableId;
+  final Map<String, dynamic> Function(Map<String, dynamic>) resolveRow;
+  final Future<void> Function() onReload;
+
+  static const _cellPadding =
+      EdgeInsets.symmetric(horizontal: 12, vertical: 10);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final borderColor = theme.colorScheme.border;
+
+    return Table(
+      defaultColumnWidth: const IntrinsicColumnWidth(),
+      border: TableBorder(
+        horizontalInside: BorderSide(color: borderColor, width: 0.5),
+        bottom: BorderSide(color: borderColor, width: 0.5),
+      ),
+      children: [
+        // Header row
+        TableRow(
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: borderColor)),
+          ),
+          children: labels
+              .map(
+                (label) => Padding(
+                  padding: _cellPadding,
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: theme.colorScheme.mutedForeground,
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+        // Empty state
+        if (rows.isEmpty)
+          TableRow(
+            children: labels
+                .map(
+                  (_) => Padding(
+                    padding: _cellPadding,
+                    child: const Text('—', style: TextStyle(fontSize: 13)),
+                  ),
+                )
+                .toList(),
+          ),
+        // Data rows
+        ...rows.asMap().entries.map(
+          (entry) => TableRow(
+            children: entry.value
+                .map(
+                  (value) => GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () async {
+                      final reload = await Navigator.of(context).push<bool>(
+                        MaterialPageRoute(
+                          builder: (_) => DataTableRowFormPage(
+                            title: 'Edit row',
+                            dataTableId: tableId,
+                            columns: resolvedColumns,
+                            initialRow: resolveRow(sourceRows[entry.key]),
+                          ),
+                        ),
+                      );
+                      if (reload == true) await onReload();
+                    },
+                    child: Padding(
+                      padding: _cellPadding,
+                      child: Text(value, style: const TextStyle(fontSize: 13)),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+      ],
     );
   }
 }

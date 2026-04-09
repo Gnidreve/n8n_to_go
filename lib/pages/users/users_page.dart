@@ -54,6 +54,12 @@ class _UsersPageState extends State<UsersPage> {
           icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.plus),
+            onPressed: null,
+          ),
+        ],
       ),
       body: SafeArea(
         top: false,
@@ -75,44 +81,139 @@ class _UsersPageState extends State<UsersPage> {
                     separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       if (_items.isEmpty) return const Text('No users');
-                      final item = Map<String, dynamic>.from(_items[index] as Map);
-                      final email = item['email'] as String? ?? 'User';
-                      final fullName = [
-                        item['firstName'],
-                        item['lastName'],
-                      ]
-                          .whereType<String>()
-                          .where((part) => part.trim().isNotEmpty)
+                      final item = Map<String, dynamic>.from(
+                        _items[index] as Map,
+                      );
+                      final firstName = item['firstName'] as String? ?? '';
+                      final lastName = item['lastName'] as String? ?? '';
+                      final fullName = [firstName, lastName]
+                          .where((p) => p.trim().isNotEmpty)
                           .join(' ');
-                      final subtitle = fullName.isEmpty
-                          ? (item['role'] as String? ?? '—')
-                          : '$fullName | ${item['role'] ?? '—'}';
+                      final email = item['email'] as String? ?? '—';
+                      final role = item['role'] as String? ?? '';
+                      final displayName =
+                          fullName.isNotEmpty ? fullName : email;
 
-                      return ShadCard(
-                        padding: EdgeInsets.zero,
-                        child: ListTile(
-                          leading: const Icon(LucideIcons.userRound),
-                          title: Text(email),
-                          subtitle: Text(subtitle),
-                          trailing: const Icon(LucideIcons.chevronRight, size: 18),
-                          onTap: () async {
-                            final reload = await Navigator.of(context).push<bool>(
-                              MaterialPageRoute(
-                                builder: (_) => UserDetailPage(
-                                  userId: '${item['id'] ?? ''}',
-                                  initialUser: item,
-                                ),
+                      return _UserCard(
+                        displayName: displayName,
+                        email: email,
+                        role: role,
+                        onTap: () async {
+                          final reload =
+                              await Navigator.of(context).push<bool>(
+                            MaterialPageRoute(
+                              builder: (_) => UserDetailPage(
+                                userId: '${item['id'] ?? ''}',
+                                initialUser: item,
                               ),
-                            );
-                            if (reload == true) {
-                              await _fetch();
-                            }
-                          },
-                        ),
+                            ),
+                          );
+                          if (reload == true) await _fetch();
+                        },
                       );
                     },
                   ),
       ),
+    );
+  }
+}
+
+class _UserCard extends StatelessWidget {
+  const _UserCard({
+    required this.displayName,
+    required this.email,
+    required this.role,
+    required this.onTap,
+  });
+
+  final String displayName;
+  final String email;
+  final String role;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+
+    return ShadCard(
+      padding: EdgeInsets.zero,
+      child: InkWell(
+        borderRadius: theme.radius,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          child: Row(
+            children: [
+              _UserRoleIcon(role: role),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      displayName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      email,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: theme.colorScheme.mutedForeground,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                LucideIcons.chevronRight,
+                size: 18,
+                color: theme.colorScheme.foreground,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UserRoleIcon extends StatelessWidget {
+  const _UserRoleIcon({required this.role});
+
+  final String role;
+
+  @override
+  Widget build(BuildContext context) {
+    if (role.isNotEmpty) {
+      final assetPath = 'lib/assets/users/$role.svg';
+      return SvgPicture.asset(
+        assetPath,
+        width: 20,
+        height: 20,
+        colorFilter: ColorFilter.mode(
+          ShadTheme.of(context).colorScheme.foreground,
+          BlendMode.srcIn,
+        ),
+        placeholderBuilder: (_) => const _FallbackIcon(),
+      );
+    }
+    return const _FallbackIcon();
+  }
+}
+
+class _FallbackIcon extends StatelessWidget {
+  const _FallbackIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      LucideIcons.userRound,
+      size: 20,
+      color: ShadTheme.of(context).colorScheme.foreground,
     );
   }
 }

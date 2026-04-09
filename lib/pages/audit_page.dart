@@ -1,9 +1,11 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../api/api.dart';
+import '../utils/app_toast.dart';
 
 class AuditPage extends StatefulWidget {
   const AuditPage({super.key});
@@ -74,6 +76,17 @@ class _AuditPageState extends State<AuditPage> {
           icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.share),
+            onPressed: _report == null
+                ? null
+                : () {
+                    Clipboard.setData(ClipboardData(text: prettyJson));
+                    showInfoToast(context, 'Copied to clipboard');
+                  },
+          ),
+        ],
       ),
       body: SafeArea(
         top: false,
@@ -93,17 +106,12 @@ class _AuditPageState extends State<AuditPage> {
                     padding: const EdgeInsets.all(16),
                     children: [
                       ShadCard(
-                        title: const Text('Audit report'),
-                        description: const Text('Raw JSON response'),
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 16),
-                          child: SelectableText(
-                            prettyJson,
-                            style: const TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 12,
-                              height: 1.4,
-                            ),
+                        child: SelectableText(
+                          prettyJson,
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 12,
+                            height: 1.4,
                           ),
                         ),
                       ),

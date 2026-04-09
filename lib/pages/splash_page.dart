@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../services/config_service.dart';
+import '../services/push_notifications_service.dart';
 import 'home_page.dart';
 import 'setup_page.dart';
 
@@ -35,17 +36,17 @@ class _SplashPageState extends State<SplashPage>
   }
 
   Future<void> _init() async {
-    await Future.wait([
-      ConfigService.instance.load(),
-      _controller.forward(),
-    ]);
+    await Future.wait([ConfigService.instance.load(), _controller.forward()]);
     if (!mounted) return;
     final next = ConfigService.instance.isConfigured
         ? const HomePage()
         : const SetupPage();
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => next),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => next));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      PushNotificationsService.instance.consumePendingNotificationNavigation();
+    });
   }
 
   @override

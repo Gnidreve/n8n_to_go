@@ -162,7 +162,7 @@ class _DataTablesPageState extends State<DataTablesPage> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '$rowCount rows | $columnCount columns',
+                                    '${rowCount > 0 ? rowCount : '—'} rows | $columnCount columns',
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: ShadTheme.of(context)

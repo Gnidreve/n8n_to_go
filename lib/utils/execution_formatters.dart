@@ -1,20 +1,9 @@
-DateTime? parseExecutionDate(dynamic value) {
-  if (value is! String || value.isEmpty) return null;
-  return DateTime.tryParse(value)?.toLocal();
-}
+import 'date_time_formatter.dart';
 
-String formatExecutionDateTime(DateTime? value) {
-  if (value == null) return 'Unknown date';
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-  ];
-  final month = months[value.month - 1];
-  final hour = value.hour.toString().padLeft(2, '0');
-  final minute = value.minute.toString().padLeft(2, '0');
-  final second = value.second.toString().padLeft(2, '0');
-  return '$month ${value.day}, $hour:$minute:$second';
-}
+DateTime? parseExecutionDate(dynamic value) => parseDateTime(value);
+
+String formatExecutionDateTime(DateTime? value) =>
+    value == null ? 'Unknown date' : formatDateTime(value);
 
 bool isExecutionError(Map<String, dynamic> item) {
   final raw = (item['status'] ?? '').toString().toLowerCase();

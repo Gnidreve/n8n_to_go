@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../utils/app_toast.dart';
 
 class DataTableCreatePage extends StatefulWidget {
   const DataTableCreatePage({super.key});
@@ -27,19 +28,11 @@ class _DataTableCreatePageState extends State<DataTableCreatePage> {
   Future<void> _save() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      ShadToaster.of(context).show(
-        const ShadToast.destructive(
-          title: Text('Table name is required'),
-        ),
-      );
+      showErrorToast(context, 'Table name is required');
       return;
     }
     if (_columns.isEmpty) {
-      ShadToaster.of(context).show(
-        const ShadToast.destructive(
-          title: Text('At least one column is required'),
-        ),
-      );
+      showErrorToast(context, 'At least one column is required');
       return;
     }
 
@@ -47,12 +40,8 @@ class _DataTableCreatePageState extends State<DataTableCreatePage> {
     for (var i = 0; i < _columns.length; i++) {
       final columnName = _columns[i].nameController.text.trim();
       if (columnName.isEmpty) {
-        ShadToaster.of(context).show(
-          ShadToast.destructive(
-            title: const Text('Column name is required'),
-            description: Text('Column ${i + 1} is missing a name.'),
-          ),
-        );
+        showErrorToast(context, 'Column name is required',
+            description: 'Column ${i + 1} is missing a name.');
         return;
       }
 
@@ -70,19 +59,12 @@ class _DataTableCreatePageState extends State<DataTableCreatePage> {
         columns: preparedColumns,
       );
       if (!mounted) return;
-      ShadToaster.of(context).show(
-        const ShadToast(title: Text('Data table created')),
-      );
+      showSuccessToast(context, 'Data table created');
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ShadToaster.of(context).show(
-        ShadToast.destructive(
-          title: const Text('Error'),
-          description: Text(e.toString()),
-        ),
-      );
+      showErrorToast(context, 'Error', description: e.toString());
     }
   }
 
@@ -297,11 +279,7 @@ class _ColumnDialogState extends State<_ColumnDialog> {
   void _save() {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      ShadToaster.of(context).show(
-        const ShadToast.destructive(
-          title: Text('Column name is required'),
-        ),
-      );
+      showErrorToast(context, 'Column name is required');
       return;
     }
 
