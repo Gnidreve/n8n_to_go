@@ -49,3 +49,7 @@ flutter:
       - lib/assets/credentials/
       - lib/assets/users/
       - lib/assets/splash-screem.svg
+   fonts:
+      - family: InterVariable
+        fonts:
+           - asset: lib/assets/fonts/InterVariable.ttf

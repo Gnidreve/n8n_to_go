@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 const _brandPrimary = Color(0xFFFF4B33);
@@ -9,7 +8,7 @@ const _lightCard = Color(0xFFFFFFFF);
 const _darkBackground = Color(0xFF171717);
 const _darkCard = Color(0xFF212121);
 
-TextStyle _jbm({
+TextStyle _inter({
   TextStyle? textStyle,
   Color? color,
   Color? backgroundColor,
@@ -29,14 +28,15 @@ TextStyle _jbm({
   Color? decorationColor,
   TextDecorationStyle? decorationStyle,
   double? decorationThickness,
-}) => GoogleFonts.jetBrainsMono(
-  textStyle: textStyle,
+}) => (textStyle ?? const TextStyle()).copyWith(
+  fontFamily: 'InterVariable',
+  fontFamilyFallback: const ['sans-serif'],
   color: color,
   backgroundColor: backgroundColor,
   fontSize: fontSize,
   fontStyle: fontStyle,
-  fontWeight: fontWeight == FontWeight.w400 ? FontWeight.w500 : fontWeight,
-  letterSpacing: letterSpacing ?? -0.1,
+  fontWeight: fontWeight,
+  letterSpacing: letterSpacing,
   wordSpacing: wordSpacing,
   textBaseline: textBaseline,
   height: height,
@@ -59,10 +59,12 @@ final appTheme = ShadThemeData(
     primary: _brandPrimary,
     primaryForeground: _brandPrimaryForeground,
   ),
-  textTheme: ShadTextTheme.fromGoogleFont(_jbm),
+  textTheme: ShadTextTheme.fromGoogleFont(_inter),
   radius: BorderRadius.circular(6.72),
   primaryToastTheme: const ShadToastTheme(alignment: Alignment.bottomCenter),
-  destructiveToastTheme: const ShadToastTheme(alignment: Alignment.bottomCenter),
+  destructiveToastTheme: const ShadToastTheme(
+    alignment: Alignment.bottomCenter,
+  ),
 );
 
 final appDarkTheme = ShadThemeData(
@@ -73,8 +75,10 @@ final appDarkTheme = ShadThemeData(
     primary: _brandPrimary,
     primaryForeground: _brandPrimaryForeground,
   ),
-  textTheme: ShadTextTheme.fromGoogleFont(_jbm),
+  textTheme: ShadTextTheme.fromGoogleFont(_inter),
   radius: BorderRadius.circular(6.72),
   primaryToastTheme: const ShadToastTheme(alignment: Alignment.bottomCenter),
-  destructiveToastTheme: const ShadToastTheme(alignment: Alignment.bottomCenter),
+  destructiveToastTheme: const ShadToastTheme(
+    alignment: Alignment.bottomCenter,
+  ),
 );
