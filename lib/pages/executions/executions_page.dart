@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../styles.dart';
 import '../../utils/execution_formatters.dart';
 import 'execution_detail_page.dart';
 
@@ -180,7 +181,7 @@ class _ExecutionCard extends StatelessWidget {
     final theme = ShadTheme.of(context);
     final startedAt = parseExecutionDate(item['startedAt'] ?? item['createdAt']);
     final isError = isExecutionError(item);
-    final accent = isError ? const Color(0xFFF87171) : const Color(0xFF86EFAC);
+    final accent = isError ? kColorError : kColorSuccessSubtle;
     final executionId = '${item['id'] ?? ''}';
 
     return ShadCard(
@@ -237,8 +238,8 @@ class _ExecutionCard extends StatelessWidget {
                             text: executionStatusLabel(item),
                             style: TextStyle(
                               color: isError
-                                  ? const Color(0xFFF87171)
-                                  : const Color(0xFF86EFAC),
+                                  ? kColorError
+                                  : kColorSuccessSubtle,
                               fontWeight: FontWeight.w600,
                             ),
                           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../api/api.dart';
+import '../../styles.dart';
 import '../../utils/app_toast.dart';
 import '../../utils/execution_formatters.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -169,8 +170,8 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
                         else
                           ..._executions.map((row) {
                             final accent = row.isError
-                                ? const Color(0xFFF87171)
-                                : const Color(0xFF86EFAC);
+                                ? kColorError
+                                : kColorSuccessSubtle;
 
                             return Padding(
                               padding: const EdgeInsets.only(top: 10),
@@ -350,7 +351,7 @@ class _StatusRow extends StatelessWidget {
             width: 8,
             height: 8,
             decoration: BoxDecoration(
-              color: active ? const Color(0xFF22c55e) : const Color(0xFF71717a),
+              color: active ? kColorSuccess : kColorMuted,
               shape: BoxShape.circle,
             ),
           ),
