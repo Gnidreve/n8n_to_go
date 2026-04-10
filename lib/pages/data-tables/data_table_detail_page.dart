@@ -172,6 +172,13 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
         .toList();
   }
 
+  Future<void> _showColumnDialog(Map<String, dynamic> column) async {
+    await showShadDialog<void>(
+      context: context,
+      builder: (_) => _ColumnInfoDialog(column: column),
+    );
+  }
+
   Map<String, dynamic> _resolvedRow(Map<String, dynamic> row) {
     final result = <String, dynamic>{};
     for (final column in _resolvedColumns) {
@@ -284,6 +291,7 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
                           tableId: widget.tableId,
                           resolveRow: _resolvedRow,
                           onReload: _fetch,
+                          onColumnTap: (column) => _showColumnDialog(column),
                         ),
                       ),
                     ),
@@ -345,6 +353,91 @@ class _AddRowButton extends StatelessWidget {
   }
 }
 
+class _ColumnInfoDialog extends StatelessWidget {
+  const _ColumnInfoDialog({required this.column});
+
+  final Map<String, dynamic> column;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = column['name'] as String? ??
+        column['displayName'] as String? ??
+        column['id'] as String? ??
+        'Column';
+    final type = (column['type'] as String? ?? 'string').toLowerCase();
+
+    return ShadDialog(
+      title: Row(
+        children: [
+          _ColumnTypeIcon(type: type),
+          const SizedBox(width: 8),
+          Text(name),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+          _InfoRow('Name', name),
+          _InfoRow('Type', type),
+          if (column['id'] != null) _InfoRow('ID', '${column['id']}'),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ShadButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow(this.label, this.value);
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 60,
+            child: Text(label,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+          ),
+          Expanded(child: Text(value)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ColumnTypeIcon extends StatelessWidget {
+  const _ColumnTypeIcon({required this.type});
+
+  final String type;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = switch (type) {
+      'number' => LucideIcons.hash,
+      'boolean' => LucideIcons.squareCheck,
+      _ => LucideIcons.type,
+    };
+    return Icon(icon, size: 13,
+        color: ShadTheme.of(context).colorScheme.mutedForeground);
+  }
+}
+
 class _DataTable extends StatelessWidget {
   const _DataTable({
     required this.labels,
@@ -354,6 +447,7 @@ class _DataTable extends StatelessWidget {
     required this.tableId,
     required this.resolveRow,
     required this.onReload,
+    required this.onColumnTap,
   });
 
   final List<String> labels;
@@ -363,6 +457,7 @@ class _DataTable extends StatelessWidget {
   final String tableId;
   final Map<String, dynamic> Function(Map<String, dynamic>) resolveRow;
   final Future<void> Function() onReload;
+  final void Function(Map<String, dynamic>) onColumnTap;
 
   static const _cellPadding =
       EdgeInsets.symmetric(horizontal: 12, vertical: 10);
@@ -384,21 +479,33 @@ class _DataTable extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border(bottom: BorderSide(color: borderColor)),
           ),
-          children: labels
-              .map(
-                (label) => Padding(
-                  padding: _cellPadding,
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                      color: theme.colorScheme.mutedForeground,
+          children: resolvedColumns.asMap().entries.map((entry) {
+            final col = entry.value;
+            final label = labels.length > entry.key ? labels[entry.key] : '';
+            final type = (col['type'] as String? ?? 'string').toLowerCase();
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => onColumnTap(col),
+              child: Padding(
+                padding: _cellPadding,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _ColumnTypeIcon(type: type),
+                    const SizedBox(width: 5),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: theme.colorScheme.mutedForeground,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              )
-              .toList(),
+              ),
+            );
+          }).toList(),
         ),
         // Empty state
         if (rows.isEmpty)

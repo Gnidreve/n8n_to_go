@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 const _brandPrimary = Color(0xFFFF4B33);
+
+// ── Semantic status colors ─────────────────────────────────────────────────────
+const kColorSuccess = Color(0xFF22C55E);
+const kColorSuccessSubtle = Color(0xFF86EFAC);
+const kColorError = Color(0xFFF87171);
+const kColorMuted = Color(0xFF71717A);
 const _brandPrimaryForeground = Color(0xFF171717);
 const _lightBackground = Color(0xFFFCFCFC);
 const _lightCard = Color(0xFFFFFFFF);
@@ -61,10 +67,7 @@ final appTheme = ShadThemeData(
   ),
   textTheme: ShadTextTheme.fromGoogleFont(_inter),
   radius: BorderRadius.circular(6.72),
-  primaryToastTheme: const ShadToastTheme(alignment: Alignment.bottomCenter),
-  destructiveToastTheme: const ShadToastTheme(
-    alignment: Alignment.bottomCenter,
-  ),
+  sonnerTheme: const ShadSonnerTheme(alignment: Alignment.bottomCenter),
 );
 
 final appDarkTheme = ShadThemeData(
@@ -77,8 +80,5 @@ final appDarkTheme = ShadThemeData(
   ),
   textTheme: ShadTextTheme.fromGoogleFont(_inter),
   radius: BorderRadius.circular(6.72),
-  primaryToastTheme: const ShadToastTheme(alignment: Alignment.bottomCenter),
-  destructiveToastTheme: const ShadToastTheme(
-    alignment: Alignment.bottomCenter,
-  ),
+  sonnerTheme: const ShadSonnerTheme(alignment: Alignment.bottomCenter),
 );

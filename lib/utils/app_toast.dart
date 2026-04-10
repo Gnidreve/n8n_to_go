@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../styles.dart';
+
 enum _AppToastType { info, success, error }
 
 class AppToast {
@@ -28,7 +30,7 @@ class AppToast {
     final sonner = ShadSonner.of(context);
     final color = switch (type) {
       _AppToastType.info => theme.colorScheme.foreground,
-      _AppToastType.success => const Color(0xFF22C55E),
+      _AppToastType.success => kColorSuccess,
       _AppToastType.error => theme.colorScheme.destructive,
     };
     final icon = switch (type) {
@@ -60,7 +62,7 @@ class AppToast {
                 message,
                 style: theme.textTheme.small.copyWith(color: color),
               ),
-        backgroundColor: const Color(0xFF111827),
+        backgroundColor: theme.colorScheme.card,
       ),
     );
   }

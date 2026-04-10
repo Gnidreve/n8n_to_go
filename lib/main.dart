@@ -106,9 +106,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           ),
         );
       },
-      home: const ShadSonner(
-        child: SplashPage(),
-      ),
+      home: const SplashPage(),
     );
   }
 }
