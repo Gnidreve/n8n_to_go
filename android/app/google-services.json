@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "858081627769",
+    "project_id": "n8n-push-c9c0d",
+    "storage_bucket": "n8n-push-c9c0d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:858081627769:android:1722751928646111214ea8",
+        "android_client_info": {
+          "package_name": "com.wasauchimmer.n8n_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkT4ujvJ4ptm6FBix0ZjQAbDjsxYlp0SU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
