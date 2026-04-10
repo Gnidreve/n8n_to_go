@@ -28,11 +28,11 @@ class _DataTableCreatePageState extends State<DataTableCreatePage> {
   Future<void> _save() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      showErrorToast(context, 'Table name is required');
+      AppToast.error(context, 'Table name is required');
       return;
     }
     if (_columns.isEmpty) {
-      showErrorToast(context, 'At least one column is required');
+      AppToast.error(context, 'At least one column is required');
       return;
     }
 
@@ -40,8 +40,7 @@ class _DataTableCreatePageState extends State<DataTableCreatePage> {
     for (var i = 0; i < _columns.length; i++) {
       final columnName = _columns[i].nameController.text.trim();
       if (columnName.isEmpty) {
-        showErrorToast(context, 'Column name is required',
-            description: 'Column ${i + 1} is missing a name.');
+        AppToast.error(context, 'Column ${i + 1} is missing a name.', title: 'Column name is required');
         return;
       }
 
@@ -59,12 +58,12 @@ class _DataTableCreatePageState extends State<DataTableCreatePage> {
         columns: preparedColumns,
       );
       if (!mounted) return;
-      showSuccessToast(context, 'Data table created');
+      AppToast.success(context, 'Data table created');
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      showErrorToast(context, 'Error', description: e.toString());
+      AppToast.error(context, e.toString(), title: 'Error');
     }
   }
 
@@ -279,7 +278,7 @@ class _ColumnDialogState extends State<_ColumnDialog> {
   void _save() {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      showErrorToast(context, 'Column name is required');
+      AppToast.error(context, 'Column name is required');
       return;
     }
 

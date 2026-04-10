@@ -3,7 +3,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../api/api.dart';
 import '../services/config_service.dart';
-import '../utils/app_toast.dart';
+import '../utils/app_toast.dart' show AppToast;
 import '../utils/url_utils.dart';
 import 'home_page.dart';
 
@@ -53,19 +53,19 @@ class _SetupPageState extends State<SetupPage> {
     final apiKey = _apiKey.text.trim();
 
     if (normalizedBaseUrl.isEmpty || apiKey.isEmpty) {
-      showErrorToast(context, 'Please fill in both fields');
+      AppToast.error(context, 'Please fill in both fields');
       return;
     }
 
     final baseUrlError = _validateBaseUrl(normalizedBaseUrl);
     if (baseUrlError != null) {
-      showErrorToast(context, 'Invalid base URL', description: baseUrlError);
+      AppToast.error(context, baseUrlError, title: 'Invalid base URL');
       return;
     }
 
     final portError = _validatePort(_port.text);
     if (portError != null) {
-      showErrorToast(context, 'Invalid port', description: portError);
+      AppToast.error(context, portError, title: 'Invalid port');
       return;
     }
 
@@ -80,8 +80,11 @@ class _SetupPageState extends State<SetupPage> {
 
       if (statusCode < 200 || statusCode >= 300) {
         setState(() => _saving = false);
-        showErrorToast(context, 'Connection failed',
-            description: _auditErrorMessage(statusCode));
+        AppToast.error(
+          context,
+          _auditErrorMessage(statusCode),
+          title: 'Connection failed',
+        );
         return;
       }
 
@@ -97,9 +100,11 @@ class _SetupPageState extends State<SetupPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      showErrorToast(context, 'Connection failed',
-          description:
-              'Could not validate your n8n instance. Check the URL, API key, and network connection.');
+      AppToast.error(
+        context,
+        'Could not validate your n8n instance. Check the URL, API key, and network connection.',
+        title: 'Connection failed',
+      );
     }
   }
 
@@ -155,8 +160,6 @@ class _SetupPageState extends State<SetupPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   SvgPicture.asset('lib/assets/splash-screem.svg', height: 48),
-                  const SizedBox(height: 24),
-                  Text('n8n to go', style: theme.textTheme.h2),
                   const SizedBox(height: 8),
                   Text(
                     'Connect your n8n instance',

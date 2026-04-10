@@ -51,12 +51,12 @@ class _CredentialDetailPageState extends State<CredentialDetailPage> {
       };
       await credentials.patch(_id, body);
       if (!mounted) return;
-      showSuccessToast(context, 'Credential saved');
+      AppToast.success(context, 'Credential saved');
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      showErrorToast(context, 'Error', description: e.toString());
+      AppToast.error(context, e.toString(), title: 'Error');
     }
   }
 
@@ -83,12 +83,12 @@ class _CredentialDetailPageState extends State<CredentialDetailPage> {
     try {
       await credentials.delete(_id);
       if (!mounted) return;
-      showSuccessToast(context, 'Credential deleted');
+      AppToast.success(context, 'Credential deleted');
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       setState(() => _deleting = false);
-      showErrorToast(context, 'Error', description: e.toString());
+      AppToast.error(context, e.toString(), title: 'Error');
     }
   }
 
@@ -124,9 +124,7 @@ class _CredentialDetailPageState extends State<CredentialDetailPage> {
             ),
             const SizedBox(height: 24),
             const ShadSeparator.horizontal(),
-            const SizedBox(height: 24),
-            const Text('Credential data', style: TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             CredentialSchemaForm(key: _schemaFormKey, credentialType: _type),
             const SizedBox(height: 24),
             const ShadSeparator.horizontal(),

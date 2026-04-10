@@ -43,7 +43,7 @@ class _CredentialTypeSelectPageState extends State<CredentialTypeSelectPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _loadingType = null);
-      showErrorToast(context, 'Failed to load schema', description: e.toString());
+      AppToast.error(context, e.toString(), title: 'Failed to load schema');
     }
   }
 

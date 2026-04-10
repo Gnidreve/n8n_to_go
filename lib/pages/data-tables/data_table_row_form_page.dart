@@ -189,18 +189,18 @@ class _DataTableRowFormPageState extends State<DataTableRowFormPage> {
         filter: jsonEncode(filter),
       );
       if (!mounted) return;
-      showSuccessToast(context, 'Row deleted');
+      AppToast.success(context, 'Row deleted');
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       setState(() => _deleting = false);
-      showErrorToast(context, 'Error', description: e.toString());
+      AppToast.error(context, e.toString(), title: 'Error');
     }
   }
 
   Future<void> _save() async {
     if (widget.dataTableId.isEmpty) {
-      showErrorToast(context, 'Missing data table ID');
+      AppToast.error(context, 'Missing data table ID');
       return;
     }
 
@@ -226,13 +226,12 @@ class _DataTableRowFormPageState extends State<DataTableRowFormPage> {
       }
 
       if (!mounted) return;
-      showSuccessToast(
-          context, widget.initialRow == null ? 'Row created' : 'Row updated');
+      AppToast.success(context, widget.initialRow == null ? 'Row created' : 'Row updated');
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      showErrorToast(context, 'Error', description: e.toString());
+      AppToast.error(context, e.toString(), title: 'Error');
     }
   }
 

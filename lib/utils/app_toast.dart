@@ -1,51 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-// ── Toast helpers ─────────────────────────────────────────────────────────────
-// Three states:
-//   success → green title text
-//   error   → red title text  (use ShadToast.destructive under the hood)
-//   info    → default foreground text  (e.g. "Copied to clipboard")
-//
-// All three show a decorative copy icon on the left.
+enum _AppToastType { info, success, error }
 
-const _kSuccessColor = Color(0xFF86EFAC);
-const _kErrorColor = Color(0xFFF87171);
+class AppToast {
+  const AppToast._();
 
-Widget _toastTitle(String text, {Color? color}) => Row(
-  mainAxisSize: MainAxisSize.min,
-  children: [
-    Icon(LucideIcons.copy, size: 13, color: color),
-    const SizedBox(width: 6),
-    Flexible(
-      child: Text(text, style: color != null ? TextStyle(color: color) : null),
-    ),
-  ],
-);
+  static void info(BuildContext context, String message, {String? title}) {
+    _show(context, type: _AppToastType.info, message: message, title: title);
+  }
 
-/// Shown after successful mutations (saved, deleted, created…).
-void showSuccessToast(BuildContext context, String title) {
-  ShadToaster.of(
-    context,
-  ).show(ShadToast(title: _toastTitle(title, color: _kSuccessColor)));
-}
+  static void success(BuildContext context, String message, {String? title}) {
+    _show(context, type: _AppToastType.success, message: message, title: title);
+  }
 
-/// Shown when something goes wrong.
-void showErrorToast(BuildContext context, String title, {String? description}) {
-  ShadToaster.of(context).show(
-    ShadToast.destructive(
-      title: _toastTitle(title, color: _kErrorColor),
-      description: description != null ? Text(description) : null,
-    ),
-  );
-}
+  static void error(BuildContext context, String message, {String? title}) {
+    _show(context, type: _AppToastType.error, message: message, title: title);
+  }
 
-/// Shown for neutral info messages (e.g. "Copied to clipboard").
-void showInfoToast(BuildContext context, String title, {String? description}) {
-  ShadToaster.of(context).show(
-    ShadToast(
-      title: _toastTitle(title),
-      description: description != null ? Text(description) : null,
-    ),
-  );
+  static void _show(
+    BuildContext context, {
+    required _AppToastType type,
+    required String message,
+    String? title,
+  }) {
+    final theme = ShadTheme.of(context);
+    final sonner = ShadSonner.of(context);
+    final color = switch (type) {
+      _AppToastType.info => theme.colorScheme.foreground,
+      _AppToastType.success => const Color(0xFF22C55E),
+      _AppToastType.error => theme.colorScheme.destructive,
+    };
+    final icon = switch (type) {
+      _AppToastType.info => LucideIcons.info,
+      _AppToastType.success => LucideIcons.circleCheckBig,
+      _AppToastType.error => LucideIcons.circleAlert,
+    };
+
+    sonner.show(
+      ShadToast(
+        title: Row(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title ?? message,
+                style: theme.textTheme.small.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        description: title == null
+            ? null
+            : Text(
+                message,
+                style: theme.textTheme.small.copyWith(color: color),
+              ),
+        backgroundColor: const Color(0xFF111827),
+      ),
+    );
+  }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import 'user_create_page.dart';
 import 'user_detail_page.dart';
 
 class UsersPage extends StatefulWidget {
@@ -15,11 +16,35 @@ class _UsersPageState extends State<UsersPage> {
   bool _loading = true;
   String? _error;
   List<dynamic> _items = [];
+  final _searchController = TextEditingController();
+  String _search = '';
 
   @override
   void initState() {
     super.initState();
     _fetch();
+    _searchController.addListener(
+      () => setState(() => _search = _searchController.text.toLowerCase()),
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<dynamic> get _filteredItems {
+    if (_search.isEmpty) return _items;
+    return _items.where((rawItem) {
+      final item = Map<String, dynamic>.from(rawItem as Map);
+      final firstName = (item['firstName'] as String? ?? '').toLowerCase();
+      final lastName = (item['lastName'] as String? ?? '').toLowerCase();
+      final email = (item['email'] as String? ?? '').toLowerCase();
+      return firstName.contains(_search) ||
+          lastName.contains(_search) ||
+          email.contains(_search);
+    }).toList();
   }
 
   Future<void> _fetch() async {
@@ -57,7 +82,12 @@ class _UsersPageState extends State<UsersPage> {
         actions: [
           IconButton(
             icon: const Icon(LucideIcons.plus),
-            onPressed: null,
+            onPressed: () async {
+              final reload = await Navigator.of(context).push<bool>(
+                MaterialPageRoute(builder: (_) => const UserCreatePage()),
+              );
+              if (reload == true) await _fetch();
+            },
           ),
         ],
       ),
@@ -75,14 +105,24 @@ class _UsersPageState extends State<UsersPage> {
                       ),
                     ),
                   )
-                : ListView.separated(
+                : RefreshIndicator(
+                    onRefresh: _fetch,
+                    child: ListView.separated(
                     padding: const EdgeInsets.all(16),
-                    itemCount: _items.isEmpty ? 1 : _items.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    itemCount: _filteredItems.isEmpty ? 2 : _filteredItems.length + 1,
+                    separatorBuilder: (_, index) =>
+                        index == 0 ? const SizedBox(height: 16) : const SizedBox(height: 12),
                     itemBuilder: (context, index) {
-                      if (_items.isEmpty) return const Text('No users');
+                      if (index == 0) {
+                        return ShadInput(
+                          controller: _searchController,
+                          placeholder: const Text('Search users'),
+                          leading: const Icon(LucideIcons.search),
+                        );
+                      }
+                      if (_filteredItems.isEmpty) return const Text('No users');
                       final item = Map<String, dynamic>.from(
-                        _items[index] as Map,
+                        _filteredItems[index - 1] as Map,
                       );
                       final firstName = item['firstName'] as String? ?? '';
                       final lastName = item['lastName'] as String? ?? '';
@@ -113,6 +153,7 @@ class _UsersPageState extends State<UsersPage> {
                       );
                     },
                   ),
+                ),
       ),
     );
   }

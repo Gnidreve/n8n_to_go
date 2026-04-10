@@ -25,6 +25,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _notifications = false;
   bool _apiKeyObscured = true;
   String? _notificationToken;
+  String _activeTab = 'general';
 
   @override
   void initState() {
@@ -50,13 +51,13 @@ class _SettingsPageState extends State<SettingsPage> {
     final baseUrl = buildBaseUrl(_baseUrl.text, _port.text);
     final baseUrlError = _validateBaseUrl(baseUrl);
     if (baseUrlError != null) {
-      showErrorToast(context, 'Invalid URL', description: baseUrlError);
+      AppToast.error(context, baseUrlError, title: 'Invalid URL');
       return;
     }
 
     final portError = _validatePort(_port.text);
     if (portError != null) {
-      showErrorToast(context, 'Invalid port', description: portError);
+      AppToast.error(context, portError, title: 'Invalid port');
       return;
     }
 
@@ -67,7 +68,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
     if (!mounted) return;
     setState(() => _saving = false);
-    showSuccessToast(context, 'Settings saved');
+    AppToast.success(context, 'Settings saved');
   }
 
   String? _validateBaseUrl(String value) {
@@ -109,12 +110,12 @@ class _SettingsPageState extends State<SettingsPage> {
         });
 
         if (result.enabled) {
-          showSuccessToast(context, 'Push notifications enabled');
+          AppToast.success(context, 'Push notifications enabled');
         } else {
-          showErrorToast(
+          AppToast.error(
             context,
-            'Push notifications unavailable',
-            description: result.message,
+            result.message ?? 'Push notifications unavailable',
+            title: result.message != null ? 'Push notifications unavailable' : null,
           );
         }
       } else {
@@ -125,7 +126,7 @@ class _SettingsPageState extends State<SettingsPage> {
           _notifications = false;
           _notificationToken = null;
         });
-        showInfoToast(context, 'Push notifications disabled');
+        AppToast.info(context, 'Push notifications disabled');
       }
     } catch (error) {
       if (!mounted) return;
@@ -133,10 +134,10 @@ class _SettingsPageState extends State<SettingsPage> {
         _notifications = PreferencesService.instance.pushNotificationsEnabled;
         _notificationToken = PreferencesService.instance.pushNotificationToken;
       });
-      showErrorToast(
+      AppToast.error(
         context,
-        'Push notifications failed',
-        description: error.toString(),
+        error.toString(),
+        title: 'Push notifications failed',
       );
     } finally {
       if (mounted) {
@@ -150,7 +151,7 @@ class _SettingsPageState extends State<SettingsPage> {
     if (token == null || token.isEmpty) return;
     await Clipboard.setData(ClipboardData(text: token));
     if (!mounted) return;
-    showInfoToast(context, 'Device token copied');
+    AppToast.info(context, 'Device token copied');
   }
 
   @override
@@ -167,279 +168,381 @@ class _SettingsPageState extends State<SettingsPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
-          IconButton(
-            icon: _saving
-                ? const SizedBox.square(
-                    dimension: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(LucideIcons.check),
-            onPressed: _saving ? null : _save,
-          ),
+          if (_activeTab == 'general')
+            IconButton(
+              icon: _saving
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(LucideIcons.check),
+              onPressed: _saving ? null : _save,
+            ),
         ],
       ),
       body: SafeArea(
         top: false,
-        child: ListView(
-          padding: EdgeInsets.zero,
+        child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                _SettingsField(
-                  label: 'URL',
-                  child: ShadInput(
-                    controller: _baseUrl,
-                    placeholder: const Text('https://your-n8n-instance.com'),
-                    leading: const Icon(LucideIcons.globe),
-                    enabled: cfg.baseUrlEditable,
-                    keyboardType: TextInputType.url,
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: ShadTabs<String>(
+                value: _activeTab,
+                onChanged: (v) => setState(() => _activeTab = v),
+                tabs: const [
+                  ShadTab(
+                    value: 'general',
+                    content: SizedBox.shrink(),
+                    child: Text('General'),
                   ),
-                ),
-                const SizedBox(height: 16),
-                _SettingsField(
-                  label: 'Port',
-                  child: ShadInput(
-                    controller: _port,
-                    placeholder: const Text('5678'),
-                    leading: const Icon(LucideIcons.network),
-                    enabled: cfg.baseUrlEditable,
-                    keyboardType: TextInputType.number,
+                  ShadTab(
+                    value: 'appearance',
+                    content: SizedBox.shrink(),
+                    child: Text('Appearance'),
                   ),
-                ),
-                const SizedBox(height: 16),
-                _SettingsField(
-                  label: 'API Key',
-                  child: ShadInput(
-                    controller: _apiKey,
-                    placeholder: const Text('Your n8n API key'),
-                    leading: const Icon(LucideIcons.lock),
-                    enabled: cfg.apiKeyEditable,
-                    obscureText: _apiKeyObscured,
-                    trailing: SizedBox.square(
-                      dimension: 24,
-                      child: OverflowBox(
-                        maxWidth: 28,
-                        maxHeight: 28,
-                        child: ShadIconButton(
-                          iconSize: 20,
-                          padding: const EdgeInsets.all(2),
-                          icon: Icon(
-                            _apiKeyObscured
-                                ? LucideIcons.eyeOff
-                                : LucideIcons.eye,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _apiKeyObscured = !_apiKeyObscured;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
+                  ShadTab(
+                    value: 'notifications',
+                    content: SizedBox.shrink(),
+                    child: Text('Notifications'),
                   ),
-                ),
-                const SizedBox(height: 24),
-                const ShadSeparator.horizontal(),
-                const SizedBox(height: 24),
-                _SettingsField(
-                  label: 'Theme',
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ShadSelect<ThemeMode>(
-                      minWidth: 280,
-                      initialValue: PreferencesService.instance.themeMode,
-                      onChanged: (mode) {
-                        if (mode != null) {
-                          PreferencesService.instance.setThemeMode(mode);
-                        }
-                      },
-                      options: const [
-                        ShadOption(
-                          value: ThemeMode.system,
-                          child: Row(
-                            children: [
-                              Icon(LucideIcons.laptopMinimal, size: 16),
-                              SizedBox(width: 8),
-                              Text('System'),
-                            ],
-                          ),
-                        ),
-                        ShadOption(
-                          value: ThemeMode.light,
-                          child: Row(
-                            children: [
-                              Icon(LucideIcons.sun, size: 16),
-                              SizedBox(width: 8),
-                              Text('Light'),
-                            ],
-                          ),
-                        ),
-                        ShadOption(
-                          value: ThemeMode.dark,
-                          child: Row(
-                            children: [
-                              Icon(LucideIcons.moon, size: 16),
-                              SizedBox(width: 8),
-                              Text('Dark'),
-                            ],
-                          ),
-                        ),
-                      ],
-                      selectedOptionBuilder: (context, value) => Row(
-                        children: [
-                          Icon(switch (value) {
-                            ThemeMode.light => LucideIcons.sun,
-                            ThemeMode.dark => LucideIcons.moon,
-                            ThemeMode.system => LucideIcons.laptopMinimal,
-                          }, size: 16),
-                          const SizedBox(width: 8),
-                          Text(switch (value) {
-                            ThemeMode.light => 'Light',
-                            ThemeMode.dark => 'Dark',
-                            ThemeMode.system => 'System',
-                          }),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const ShadSeparator.horizontal(),
-                const SizedBox(height: 24),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Push Notifications',
-                            style: TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Enable Firebase Cloud Messaging for this device.',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: ShadTheme.of(
-                                context,
-                              ).colorScheme.mutedForeground,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    _notificationsBusy
-                        ? const SizedBox.square(
-                            dimension: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Switch.adaptive(
-                            value: _notifications,
-                            onChanged: _setNotificationsEnabled,
-                          ),
-                  ],
-                ),
-                if (!pushService.isAvailable) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    pushService.initializationError ??
-                        'Firebase is not configured yet. Add google-services.json to finish push setup.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: ShadTheme.of(context).colorScheme.mutedForeground,
-                    ),
-                  ),
-                ],
-                if (_notificationToken != null &&
-                    _notificationToken!.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  _SettingsField(
-                    label: 'Device Token',
-                    child: ShadCard(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SelectableText(
-                            _notificationToken!,
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                          const SizedBox(height: 12),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: ShadButton.outline(
-                              onPressed: _copyNotificationToken,
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(LucideIcons.copy, size: 14),
-                                  SizedBox(width: 8),
-                                  Text('Copy token'),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
                 ],
               ),
             ),
-            const SizedBox(height: 32),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: ShadButton.destructive(
-                width: double.infinity,
-                onPressed: () async {
-                  final navigator = Navigator.of(context);
-                  final confirmed = await showShadDialog<bool>(
-                    context: context,
-                    builder: (context) => ShadDialog.alert(
-                      title: const Text('Log out?'),
-                      description: const Padding(
-                        padding: EdgeInsets.only(bottom: 8),
-                        child: Text(
-                          'This will clear your saved URL, port, and API key from the app.',
-                        ),
-                      ),
-                      actions: [
-                        ShadButton.outline(
-                          child: const Text('Cancel'),
-                          onPressed: () => Navigator.of(context).pop(false),
-                        ),
-                        ShadButton.destructive(
-                          child: const Text('Log out'),
-                          onPressed: () => Navigator.of(context).pop(true),
-                        ),
-                      ],
-                    ),
-                  );
-
-                  if (confirmed != true) return;
-
-                  await ConfigService.instance.clear();
-                  if (!mounted) return;
-                  navigator.pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const SetupPage()),
-                    (_) => false,
-                  );
-                },
-                child: const Text('Log out'),
-              ),
+            Expanded(
+              child: switch (_activeTab) {
+                'appearance' => _AppearanceTab(),
+                'notifications' => _NotificationsTab(
+                    notifications: _notifications,
+                    notificationsBusy: _notificationsBusy,
+                    notificationToken: _notificationToken,
+                    pushService: pushService,
+                    onToggle: _setNotificationsEnabled,
+                    onCopyToken: _copyNotificationToken,
+                  ),
+                _ => _GeneralTab(
+                    baseUrl: _baseUrl,
+                    port: _port,
+                    apiKey: _apiKey,
+                    cfg: cfg,
+                    apiKeyObscured: _apiKeyObscured,
+                    onToggleObscure: () =>
+                        setState(() => _apiKeyObscured = !_apiKeyObscured),
+                    onLogout: _logout,
+                  ),
+              },
             ),
           ],
         ),
       ),
     );
   }
+
+  Future<void> _logout() async {
+    final navigator = Navigator.of(context);
+    final confirmed = await showShadDialog<bool>(
+      context: context,
+      builder: (context) => ShadDialog.alert(
+        title: const Text('Log out?'),
+        description: const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: Text(
+            'This will clear your saved URL, port, and API key from the app.',
+          ),
+        ),
+        actions: [
+          ShadButton.outline(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          ShadButton.destructive(
+            child: const Text('Log out'),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    await ConfigService.instance.clear();
+    if (!mounted) return;
+    navigator.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const SetupPage()),
+      (_) => false,
+    );
+  }
 }
+
+// ── General tab ───────────────────────────────────────────────────────────────
+
+class _GeneralTab extends StatelessWidget {
+  const _GeneralTab({
+    required this.baseUrl,
+    required this.port,
+    required this.apiKey,
+    required this.cfg,
+    required this.apiKeyObscured,
+    required this.onToggleObscure,
+    required this.onLogout,
+  });
+
+  final TextEditingController baseUrl;
+  final TextEditingController port;
+  final TextEditingController apiKey;
+  final ConfigService cfg;
+  final bool apiKeyObscured;
+  final VoidCallback onToggleObscure;
+  final VoidCallback onLogout;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _SettingsField(
+          label: 'URL',
+          child: ShadInput(
+            controller: baseUrl,
+            placeholder: const Text('https://your-n8n-instance.com'),
+            leading: const Icon(LucideIcons.globe),
+            enabled: cfg.baseUrlEditable,
+            keyboardType: TextInputType.url,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _SettingsField(
+          label: 'Port',
+          child: ShadInput(
+            controller: port,
+            placeholder: const Text('5678'),
+            leading: const Icon(LucideIcons.network),
+            enabled: cfg.baseUrlEditable,
+            keyboardType: TextInputType.number,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _SettingsField(
+          label: 'API Key',
+          child: ShadInput(
+            controller: apiKey,
+            placeholder: const Text('Your n8n API key'),
+            leading: const Icon(LucideIcons.lock),
+            enabled: cfg.apiKeyEditable,
+            obscureText: apiKeyObscured,
+            trailing: SizedBox.square(
+              dimension: 24,
+              child: OverflowBox(
+                maxWidth: 28,
+                maxHeight: 28,
+                child: ShadIconButton(
+                  iconSize: 20,
+                  padding: const EdgeInsets.all(2),
+                  icon: Icon(
+                    apiKeyObscured ? LucideIcons.eyeOff : LucideIcons.eye,
+                  ),
+                  onPressed: onToggleObscure,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 32),
+        ShadButton.destructive(
+          width: double.infinity,
+          onPressed: onLogout,
+          child: const Text('Log out'),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Appearance tab ────────────────────────────────────────────────────────────
+
+class _AppearanceTab extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _SettingsField(
+          label: 'Theme',
+          child: SizedBox(
+            width: double.infinity,
+            child: ShadSelect<ThemeMode>(
+              minWidth: 280,
+              initialValue: PreferencesService.instance.themeMode,
+              onChanged: (mode) {
+                if (mode != null) {
+                  PreferencesService.instance.setThemeMode(mode);
+                }
+              },
+              options: const [
+                ShadOption(
+                  value: ThemeMode.system,
+                  child: Row(
+                    children: [
+                      Icon(LucideIcons.laptopMinimal, size: 16),
+                      SizedBox(width: 8),
+                      Text('System'),
+                    ],
+                  ),
+                ),
+                ShadOption(
+                  value: ThemeMode.light,
+                  child: Row(
+                    children: [
+                      Icon(LucideIcons.sun, size: 16),
+                      SizedBox(width: 8),
+                      Text('Light'),
+                    ],
+                  ),
+                ),
+                ShadOption(
+                  value: ThemeMode.dark,
+                  child: Row(
+                    children: [
+                      Icon(LucideIcons.moon, size: 16),
+                      SizedBox(width: 8),
+                      Text('Dark'),
+                    ],
+                  ),
+                ),
+              ],
+              selectedOptionBuilder: (context, value) => Row(
+                children: [
+                  Icon(
+                    switch (value) {
+                      ThemeMode.light => LucideIcons.sun,
+                      ThemeMode.dark => LucideIcons.moon,
+                      ThemeMode.system => LucideIcons.laptopMinimal,
+                    },
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(switch (value) {
+                    ThemeMode.light => 'Light',
+                    ThemeMode.dark => 'Dark',
+                    ThemeMode.system => 'System',
+                  }),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Notifications tab ─────────────────────────────────────────────────────────
+
+class _NotificationsTab extends StatelessWidget {
+  const _NotificationsTab({
+    required this.notifications,
+    required this.notificationsBusy,
+    required this.notificationToken,
+    required this.pushService,
+    required this.onToggle,
+    required this.onCopyToken,
+  });
+
+  final bool notifications;
+  final bool notificationsBusy;
+  final String? notificationToken;
+  final PushNotificationsService pushService;
+  final ValueChanged<bool> onToggle;
+  final VoidCallback onCopyToken;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Push Notifications',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Enable Firebase Cloud Messaging for this device.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: ShadTheme.of(context).colorScheme.mutedForeground,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            notificationsBusy
+                ? const SizedBox.square(
+                    dimension: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Switch.adaptive(
+                    value: notifications,
+                    onChanged: onToggle,
+                  ),
+          ],
+        ),
+        if (!pushService.isAvailable) ...[
+          const SizedBox(height: 12),
+          Text(
+            pushService.initializationError ??
+                'Firebase is not configured yet. Add google-services.json to finish push setup.',
+            style: TextStyle(
+              fontSize: 13,
+              color: ShadTheme.of(context).colorScheme.mutedForeground,
+            ),
+          ),
+        ],
+        if (notificationToken != null && notificationToken!.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _SettingsField(
+            label: 'Device Token',
+            child: ShadCard(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SelectableText(
+                    notificationToken!,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ShadButton.outline(
+                      onPressed: onCopyToken,
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(LucideIcons.copy, size: 14),
+                          SizedBox(width: 8),
+                          Text('Copy token'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+// ── Shared field layout ───────────────────────────────────────────────────────
 
 class _SettingsField extends StatelessWidget {
   const _SettingsField({required this.label, required this.child});

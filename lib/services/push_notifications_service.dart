@@ -5,7 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 
 import '../pages/executions/execution_detail_page.dart';
-import '../utils/app_toast.dart';
+import '../utils/app_toast.dart' show AppToast;
 import 'preferences_service.dart';
 
 final appNavigatorKey = GlobalKey<NavigatorState>();
@@ -176,7 +176,7 @@ class PushNotificationsService {
 
     final title = message.notification?.title ?? 'Notification received';
     final body = message.notification?.body;
-    showInfoToast(context, title, description: body);
+    AppToast.info(context, body ?? title, title: body != null ? title : null);
   }
 
   Future<void> _handleNotificationOpen(RemoteMessage message) async {
@@ -261,10 +261,10 @@ class PushNotificationsService {
         return;
       }
 
-      showErrorToast(
+      AppToast.error(
         navigator.context,
-        'Could not open execution',
-        description: error.toString(),
+        error.toString(),
+        title: 'Could not open execution',
       );
     }
   }

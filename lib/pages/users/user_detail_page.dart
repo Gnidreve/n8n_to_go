@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
@@ -9,10 +10,14 @@ class UserDetailPage extends StatefulWidget {
     super.key,
     required this.userId,
     required this.initialUser,
+    this.inviteAcceptUrl,
   });
 
   final String userId;
   final Map<String, dynamic> initialUser;
+
+  /// When set, an alert dialog is shown on first render with this URL.
+  final String? inviteAcceptUrl;
 
   @override
   State<UserDetailPage> createState() => _UserDetailPageState();
@@ -20,11 +25,7 @@ class UserDetailPage extends StatefulWidget {
 
 class _UserDetailPageState extends State<UserDetailPage> {
   late Map<String, dynamic> _user;
-  late final TextEditingController _firstName;
-  late final TextEditingController _lastName;
-  late final TextEditingController _email;
   bool _loading = true;
-  bool _saving = false;
   bool _deleting = false;
   String? _error;
 
@@ -32,24 +33,10 @@ class _UserDetailPageState extends State<UserDetailPage> {
   void initState() {
     super.initState();
     _user = widget.initialUser;
-    _firstName = TextEditingController(
-      text: widget.initialUser['firstName'] as String? ?? '',
-    );
-    _lastName = TextEditingController(
-      text: widget.initialUser['lastName'] as String? ?? '',
-    );
-    _email = TextEditingController(
-      text: widget.initialUser['email'] as String? ?? '',
-    );
     _fetch();
-  }
-
-  @override
-  void dispose() {
-    _firstName.dispose();
-    _lastName.dispose();
-    _email.dispose();
-    super.dispose();
+    if (widget.inviteAcceptUrl != null && widget.inviteAcceptUrl!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showInviteDialog());
+    }
   }
 
   Future<void> _fetch() async {
@@ -58,9 +45,6 @@ class _UserDetailPageState extends State<UserDetailPage> {
       if (!mounted) return;
       setState(() {
         _user = user;
-        _firstName.text = user['firstName'] as String? ?? '';
-        _lastName.text = user['lastName'] as String? ?? '';
-        _email.text = user['email'] as String? ?? '';
         _loading = false;
         _error = null;
       });
@@ -73,23 +57,48 @@ class _UserDetailPageState extends State<UserDetailPage> {
     }
   }
 
-  Future<void> _save() async {
-    setState(() => _saving = true);
-    try {
-      await users.patch(widget.userId, {
-        'firstName': _firstName.text.trim(),
-        'lastName': _lastName.text.trim(),
-        'email': _email.text.trim(),
-      });
-      if (!mounted) return;
-      setState(() => _saving = false);
-      showSuccessToast(context, 'User saved');
-      Navigator.of(context).pop(true);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _saving = false);
-      showErrorToast(context, 'Error', description: e.toString());
-    }
+  Future<void> _showInviteDialog() async {
+    final url = widget.inviteAcceptUrl!;
+    await showShadDialog<void>(
+      context: context,
+      builder: (ctx) => ShadDialog.alert(
+        title: const Text('User invited'),
+        description: Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Share this invite URL with the new user:'),
+              const SizedBox(height: 8),
+              SelectableText(url, style: const TextStyle(fontSize: 12)),
+            ],
+          ),
+        ),
+        actions: [
+          ShadButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Done'),
+          ),
+          ShadButton.outline(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: url));
+              if (!ctx.mounted) return;
+              Navigator.of(ctx).pop();
+              if (!mounted) return;
+              AppToast.info(context, 'Invite URL copied');
+            },
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(LucideIcons.copy, size: 14),
+                SizedBox(width: 8),
+                Text('Copy'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _delete() async {
@@ -120,36 +129,34 @@ class _UserDetailPageState extends State<UserDetailPage> {
     try {
       await users.delete(widget.userId);
       if (!mounted) return;
-      showSuccessToast(context, 'User deleted');
+      AppToast.success(context, 'User deleted');
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       setState(() => _deleting = false);
-      showErrorToast(context, 'Error', description: e.toString());
+      AppToast.error(context, e.toString(), title: 'Error');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final firstName = _user['firstName'] as String? ?? '';
+    final lastName = _user['lastName'] as String? ?? '';
+    final fullName = [firstName, lastName]
+        .where((p) => p.trim().isNotEmpty)
+        .join(' ');
+    final email = _user['email'] as String? ?? '—';
+    final role = _user['role'] as String? ?? '—';
+    final id = '${_user['id'] ?? '—'}';
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: const Text('Edit User'),
+        title: const Text('User'),
         leading: IconButton(
           icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        actions: [
-          IconButton(
-            icon: _saving
-                ? const SizedBox.square(
-                    dimension: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(LucideIcons.check),
-            onPressed: _loading || _saving ? null : _save,
-          ),
-        ],
       ),
       body: SafeArea(
         top: false,
@@ -158,43 +165,21 @@ class _UserDetailPageState extends State<UserDetailPage> {
             : _error != null
                 ? Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Text('Error: $_error'),
+                    child: Text(
+                      'Error: $_error',
+                      style: TextStyle(
+                        color:
+                            ShadTheme.of(context).colorScheme.destructive,
+                      ),
+                    ),
                   )
                 : ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
-                      _Field(
-                        label: 'First name',
-                        child: ShadInput(
-                          controller: _firstName,
-                          placeholder: const Text('First name'),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _Field(
-                        label: 'Last name',
-                        child: ShadInput(
-                          controller: _lastName,
-                          placeholder: const Text('Last name'),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _Field(
-                        label: 'Email',
-                        child: ShadInput(
-                          controller: _email,
-                          placeholder: const Text('Email'),
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _Field(
-                        label: 'Role',
-                        child: ShadInput(
-                          initialValue: _user['role'] as String? ?? '—',
-                          enabled: false,
-                        ),
-                      ),
+                      if (fullName.isNotEmpty) _Row('Name', fullName),
+                      _Row('Email', email),
+                      _Row('Role', role),
+                      _Row('ID', id),
                       const SizedBox(height: 32),
                       ShadButton.destructive(
                         width: double.infinity,
@@ -215,21 +200,29 @@ class _UserDetailPageState extends State<UserDetailPage> {
   }
 }
 
-class _Field extends StatelessWidget {
-  const _Field({required this.label, required this.child});
+class _Row extends StatelessWidget {
+  const _Row(this.label, this.value);
 
   final String label;
-  final Widget child;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 6,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-        child,
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          Expanded(child: Text(value)),
+        ],
+      ),
     );
   }
 }

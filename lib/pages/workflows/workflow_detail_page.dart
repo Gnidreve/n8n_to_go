@@ -310,7 +310,7 @@ class _CopyRow extends StatelessWidget {
             child: ShadButton.outline(
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: value));
-                showInfoToast(context, 'Copied to clipboard');
+                AppToast.info(context, 'Copied to clipboard');
               },
               child: Row(
                 mainAxisSize: MainAxisSize.min,

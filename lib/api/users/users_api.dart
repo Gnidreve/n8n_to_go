@@ -2,6 +2,7 @@ import 'delete.dart';
 import 'get.dart';
 import 'get_all.dart';
 import 'patch.dart';
+import 'post.dart';
 
 class UsersApi {
   const UsersApi();
@@ -39,5 +40,9 @@ class UsersApi {
 
   Future<void> delete(String id) {
     return deleteUser(id);
+  }
+
+  Future<List<dynamic>> post(Map<String, dynamic> body) {
+    return postUser(body);
   }
 }

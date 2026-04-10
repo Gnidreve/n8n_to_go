@@ -58,6 +58,23 @@ class ApiClient {
     return response.statusCode;
   }
 
+  Future<List<dynamic>> postArray(
+    String path, {
+    List<Map<String, dynamic>>? body,
+  }) async {
+    final response = await http
+        .post(
+          _buildUri(path),
+          headers: _headers(withJson: true),
+          body: jsonEncode(body ?? const []),
+        )
+        .timeout(_timeout);
+
+    _assertOk(response.statusCode);
+    if (response.body.trim().isEmpty) return [];
+    return await compute(jsonDecode, response.body) as List<dynamic>;
+  }
+
   Future<Map<String, dynamic>> patch(
     String path, {
     Map<String, dynamic>? body,

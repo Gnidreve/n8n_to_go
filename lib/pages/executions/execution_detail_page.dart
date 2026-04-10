@@ -66,11 +66,11 @@ class _ExecutionDetailPageState extends State<ExecutionDetailPage> {
         _retrying = false;
         _didChange = true;
       });
-      showSuccessToast(context, 'Execution retried');
+      AppToast.success(context, 'Execution retried');
     } catch (e) {
       if (!mounted) return;
       setState(() => _retrying = false);
-      showErrorToast(context, 'Error', description: e.toString());
+      AppToast.error(context, e.toString(), title: 'Error');
     }
   }
 

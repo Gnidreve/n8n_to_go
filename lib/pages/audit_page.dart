@@ -83,7 +83,7 @@ class _AuditPageState extends State<AuditPage> {
                 ? null
                 : () {
                     Clipboard.setData(ClipboardData(text: prettyJson));
-                    showInfoToast(context, 'Copied to clipboard');
+                    AppToast.info(context, 'Copied to clipboard');
                   },
           ),
         ],

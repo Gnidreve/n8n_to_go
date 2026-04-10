@@ -15,11 +15,30 @@ class _DataTablesPageState extends State<DataTablesPage> {
   bool _loading = true;
   String? _error;
   List<dynamic> _items = [];
+  final _searchController = TextEditingController();
+  String _search = '';
 
   @override
   void initState() {
     super.initState();
     _fetch();
+    _searchController.addListener(
+      () => setState(() => _search = _searchController.text.toLowerCase()),
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<dynamic> get _filteredItems {
+    if (_search.isEmpty) return _items;
+    return _items.where((rawItem) {
+      final name = (Map<String, dynamic>.from(rawItem as Map)['name'] as String? ?? '').toLowerCase();
+      return name.contains(_search);
+    }).toList();
   }
 
   Future<void> _fetch() async {
@@ -116,11 +135,19 @@ class _DataTablesPageState extends State<DataTablesPage> {
                   )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
-                  itemCount: _items.isEmpty ? 1 : _items.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 12),
+                  itemCount: _filteredItems.isEmpty ? 2 : _filteredItems.length + 1,
+                  separatorBuilder: (_, index) =>
+                      index == 0 ? const SizedBox(height: 16) : const SizedBox(height: 12),
                   itemBuilder: (context, i) {
-                    if (_items.isEmpty) return const Text('No data tables');
-                    final item = Map<String, dynamic>.from(_items[i] as Map);
+                    if (i == 0) {
+                      return ShadInput(
+                        controller: _searchController,
+                        placeholder: const Text('Search data tables'),
+                        leading: const Icon(LucideIcons.search),
+                      );
+                    }
+                    if (_filteredItems.isEmpty) return const Text('No data tables');
+                    final item = Map<String, dynamic>.from(_filteredItems[i - 1] as Map);
                     final name = item['name'] as String? ?? 'Data Table';
                     final rowCount = _rowCount(item);
                     final columnCount = _columnCount(item);

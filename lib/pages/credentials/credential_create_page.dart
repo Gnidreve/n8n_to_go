@@ -32,7 +32,7 @@ class _CredentialCreatePageState extends State<CredentialCreatePage> {
 
   Future<void> _save() async {
     if (_name.text.trim().isEmpty) {
-      showErrorToast(context, 'Name is required');
+      AppToast.error(context, 'Name is required');
       return;
     }
     final formState = _schemaFormKey.currentState;
@@ -47,12 +47,12 @@ class _CredentialCreatePageState extends State<CredentialCreatePage> {
       };
       await credentials.post(body);
       if (!mounted) return;
-      showSuccessToast(context, 'Credential created');
+      AppToast.success(context, 'Credential created');
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      showErrorToast(context, 'Error', description: e.toString());
+      AppToast.error(context, e.toString(), title: 'Error');
     }
   }
 
@@ -89,9 +89,7 @@ class _CredentialCreatePageState extends State<CredentialCreatePage> {
             ),
             const SizedBox(height: 24),
             const ShadSeparator.horizontal(),
-            const SizedBox(height: 24),
-            const Text('Credential data', style: TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             CredentialSchemaForm(
               key: _schemaFormKey,
               credentialType: widget.credentialType,

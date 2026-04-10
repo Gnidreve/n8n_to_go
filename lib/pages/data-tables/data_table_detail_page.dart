@@ -267,25 +267,78 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
             else
               ShadCard(
                 padding: EdgeInsets.zero,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minWidth: MediaQuery.sizeOf(context).width - 64,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: MediaQuery.sizeOf(context).width - 64,
+                        ),
+                        child: _DataTable(
+                          labels: labels,
+                          rows: rows,
+                          sourceRows: sourceRows,
+                          resolvedColumns: _resolvedColumns,
+                          tableId: widget.tableId,
+                          resolveRow: _resolvedRow,
+                          onReload: _fetch,
+                        ),
+                      ),
                     ),
-                    child: _DataTable(
-                      labels: labels,
-                      rows: rows,
-                      sourceRows: sourceRows,
-                      resolvedColumns: _resolvedColumns,
-                      tableId: widget.tableId,
-                      resolveRow: _resolvedRow,
-                      onReload: _fetch,
+                    _AddRowButton(
+                      enabled: _resolvedColumns.isNotEmpty,
+                      onTap: _resolvedColumns.isEmpty
+                          ? null
+                          : () async {
+                              final reload = await Navigator.of(context).push<bool>(
+                                MaterialPageRoute(
+                                  builder: (_) => DataTableRowFormPage(
+                                    title: 'Create row',
+                                    dataTableId: widget.tableId,
+                                    columns: _resolvedColumns,
+                                  ),
+                                ),
+                              );
+                              if (reload == true) await _fetch();
+                            },
                     ),
-                  ),
+                  ],
                 ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AddRowButton extends StatelessWidget {
+  const _AddRowButton({required this.enabled, required this.onTap});
+
+  final bool enabled;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: theme.colorScheme.border, width: 0.5),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Icon(
+          LucideIcons.plus,
+          size: 16,
+          color: enabled
+              ? theme.colorScheme.mutedForeground
+              : theme.colorScheme.border,
         ),
       ),
     );
