@@ -17,12 +17,36 @@ class _ExecutionsPageState extends State<ExecutionsPage> {
   bool _loading = true;
   String? _error;
   List<dynamic> _items = [];
-  String _activeTab = 'finished';
+  final _searchController = TextEditingController();
+  String _search = '';
 
   @override
   void initState() {
     super.initState();
     _fetch();
+    _searchController.addListener(
+      () => setState(() => _search = _searchController.text.toLowerCase()),
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<dynamic> get _filteredItems {
+    if (_search.isEmpty) return _items;
+    return _items.where((raw) {
+      final item = Map<String, dynamic>.from(raw as Map);
+      final workflowName =
+          (item['workflowName'] as String? ?? '').toLowerCase();
+      final id = '${item['id'] ?? ''}'.toLowerCase();
+      final status = (item['status'] as String? ?? '').toLowerCase();
+      return workflowName.contains(_search) ||
+          id.contains(_search) ||
+          status.contains(_search);
+    }).toList();
   }
 
   Future<void> _fetch() async {
@@ -77,94 +101,39 @@ class _ExecutionsPageState extends State<ExecutionsPage> {
                   style: TextStyle(color: theme.colorScheme.destructive),
                 ),
               )
-            : Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    child: ShadTabs<String>(
-                      value: _activeTab,
-                      onChanged: (v) => setState(() => _activeTab = v),
-                      tabs: const [
-                        ShadTab(
-                          value: 'finished',
-                          content: SizedBox.shrink(),
-                          child: Text('Finished'),
+            : RefreshIndicator(
+                onRefresh: _fetch,
+                child: ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _filteredItems.isEmpty
+                      ? 2
+                      : _filteredItems.length + 1,
+                  separatorBuilder: (_, index) => index == 0
+                      ? const SizedBox(height: 16)
+                      : const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return ShadInput(
+                        controller: _searchController,
+                        placeholder: const Text('Search executions'),
+                        leading: const Icon(LucideIcons.search),
+                      );
+                    }
+                    if (_filteredItems.isEmpty) {
+                      return Text(
+                        'No executions',
+                        style: TextStyle(
+                          color: theme.colorScheme.mutedForeground,
                         ),
-                        ShadTab(
-                          value: 'pending',
-                          content: SizedBox.shrink(),
-                          child: Text('Pending'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: _activeTab == 'finished'
-                        ? _FinishedList(items: _items, onRefresh: _fetch)
-                        : _PendingList(onRefresh: _fetch),
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
-}
-
-class _FinishedList extends StatelessWidget {
-  const _FinishedList({required this.items, required this.onRefresh});
-
-  final List<dynamic> items;
-  final Future<void> Function() onRefresh;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
-
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: items.isEmpty
-          ? ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                Text(
-                  'No executions',
-                  style: TextStyle(color: theme.colorScheme.mutedForeground),
+                      );
+                    }
+                    final item = Map<String, dynamic>.from(
+                      _filteredItems[index - 1] as Map,
+                    );
+                    return _ExecutionCard(item: item, onReload: _fetch);
+                  },
                 ),
-              ],
-            )
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: items.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (context, i) {
-                final item = Map<String, dynamic>.from(items[i] as Map);
-                return _ExecutionCard(item: item, onReload: onRefresh);
-              },
-            ),
-    );
-  }
-}
-
-class _PendingList extends StatelessWidget {
-  const _PendingList({required this.onRefresh});
-
-  final Future<void> Function() onRefresh;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
-
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Text(
-            'No pending executions',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: theme.colorScheme.mutedForeground),
-          ),
-        ],
+              ),
       ),
     );
   }

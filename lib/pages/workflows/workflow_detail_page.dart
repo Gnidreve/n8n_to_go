@@ -38,6 +38,7 @@ class _ExecutionRow {
 
 class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
   bool _loading = true;
+  bool _deleting = false;
   String? _error;
   Map<String, dynamic>? _workflow;
   List<_ExecutionRow> _executions = [];
@@ -93,6 +94,43 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
     }
   }
 
+  Future<void> _delete() async {
+    final confirmed = await showShadDialog<bool>(
+      context: context,
+      builder: (context) => ShadDialog.alert(
+        title: const Text('Delete workflow?'),
+        description: const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: Text('This will permanently delete the workflow.'),
+        ),
+        actions: [
+          ShadButton.outline(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          ShadButton.destructive(
+            child: const Text('Delete'),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _deleting = true);
+    try {
+      await workflows.delete(widget.id);
+      if (!mounted) return;
+      AppToast.success(context, 'Workflow deleted');
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _deleting = false);
+      AppToast.error(context, e.toString(), title: 'Error');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final w = _workflow;
@@ -106,6 +144,17 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
           icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          IconButton(
+            icon: _deleting
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(LucideIcons.trash2),
+            onPressed: _deleting ? null : _delete,
+          ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

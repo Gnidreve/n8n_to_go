@@ -1,6 +1,7 @@
 import 'get.dart';
 import 'get_all.dart';
 import 'post.dart';
+import 'delete.dart';
 import 'rows/rows_api.dart';
 
 class DataTablesApi {
@@ -24,5 +25,9 @@ class DataTablesApi {
       name: name,
       columns: columns,
     );
+  }
+
+  Future<void> delete(String id) {
+    return deleteDataTable(id);
   }
 }

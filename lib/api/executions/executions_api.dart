@@ -2,6 +2,7 @@ import 'get_all.dart';
 import 'get_all_by_workflow_id.dart';
 import 'get.dart';
 import 'retry.dart';
+import 'delete.dart';
 
 class ExecutionsApi {
   const ExecutionsApi();
@@ -20,5 +21,9 @@ class ExecutionsApi {
 
   Future<Map<String, dynamic>> retry(String id, {bool loadWorkflow = true}) {
     return retryExecution(id, loadWorkflow: loadWorkflow);
+  }
+
+  Future<void> delete(String id) {
+    return deleteExecution(id);
   }
 }

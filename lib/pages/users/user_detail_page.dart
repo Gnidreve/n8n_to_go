@@ -157,6 +157,17 @@ class _UserDetailPageState extends State<UserDetailPage> {
           icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          IconButton(
+            icon: _deleting
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(LucideIcons.trash2),
+            onPressed: _deleting ? null : _delete,
+          ),
+        ],
       ),
       body: SafeArea(
         top: false,
@@ -180,19 +191,6 @@ class _UserDetailPageState extends State<UserDetailPage> {
                       _Row('Email', email),
                       _Row('Role', role),
                       _Row('ID', id),
-                      const SizedBox(height: 32),
-                      ShadButton.destructive(
-                        width: double.infinity,
-                        onPressed: _deleting ? null : _delete,
-                        child: _deleting
-                            ? const SizedBox.square(
-                                dimension: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text('Delete user'),
-                      ),
                     ],
                   ),
       ),

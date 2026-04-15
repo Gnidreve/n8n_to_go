@@ -170,13 +170,8 @@ class _SettingsPageState extends State<SettingsPage> {
         actions: [
           if (_activeTab == 'general')
             IconButton(
-              icon: _saving
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(LucideIcons.check),
-              onPressed: _saving ? null : _save,
+              icon: const Icon(LucideIcons.logOut),
+              onPressed: _logout,
             ),
         ],
       ),
@@ -189,22 +184,23 @@ class _SettingsPageState extends State<SettingsPage> {
               child: ShadTabs<String>(
                 value: _activeTab,
                 onChanged: (v) => setState(() => _activeTab = v),
-                tabs: const [
-                  ShadTab(
+                tabs: [
+                  const ShadTab(
                     value: 'general',
                     content: SizedBox.shrink(),
                     child: Text('General'),
                   ),
-                  ShadTab(
+                  const ShadTab(
                     value: 'appearance',
                     content: SizedBox.shrink(),
                     child: Text('Appearance'),
                   ),
-                  ShadTab(
-                    value: 'notifications',
-                    content: SizedBox.shrink(),
-                    child: Text('Notifications'),
-                  ),
+                  if (cfg.notificationsEnabled)
+                    const ShadTab(
+                      value: 'notifications',
+                      content: SizedBox.shrink(),
+                      child: Text('Notifications'),
+                    ),
                 ],
               ),
             ),
@@ -227,7 +223,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     apiKeyObscured: _apiKeyObscured,
                     onToggleObscure: () =>
                         setState(() => _apiKeyObscured = !_apiKeyObscured),
-                    onLogout: _logout,
+                    saving: _saving,
+                    onSave: _save,
                   ),
               },
             ),
@@ -283,7 +280,8 @@ class _GeneralTab extends StatelessWidget {
     required this.cfg,
     required this.apiKeyObscured,
     required this.onToggleObscure,
-    required this.onLogout,
+    required this.saving,
+    required this.onSave,
   });
 
   final TextEditingController baseUrl;
@@ -292,7 +290,8 @@ class _GeneralTab extends StatelessWidget {
   final ConfigService cfg;
   final bool apiKeyObscured;
   final VoidCallback onToggleObscure;
-  final VoidCallback onLogout;
+  final bool saving;
+  final VoidCallback onSave;
 
   @override
   Widget build(BuildContext context) {
@@ -347,10 +346,15 @@ class _GeneralTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 32),
-        ShadButton.destructive(
+        ShadButton(
           width: double.infinity,
-          onPressed: onLogout,
-          child: const Text('Log out'),
+          onPressed: saving ? null : onSave,
+          child: saving
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Save'),
         ),
       ],
     );

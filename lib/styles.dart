@@ -67,7 +67,10 @@ final appTheme = ShadThemeData(
   ),
   textTheme: ShadTextTheme.fromGoogleFont(_inter),
   radius: BorderRadius.circular(6.72),
-  sonnerTheme: const ShadSonnerTheme(alignment: Alignment.bottomCenter),
+  sonnerTheme: const ShadSonnerTheme(
+    alignment: Alignment.bottomCenter,
+    padding: EdgeInsets.fromLTRB(16, 16, 16, 80),
+  ),
 );
 
 final appDarkTheme = ShadThemeData(
@@ -80,5 +83,8 @@ final appDarkTheme = ShadThemeData(
   ),
   textTheme: ShadTextTheme.fromGoogleFont(_inter),
   radius: BorderRadius.circular(6.72),
-  sonnerTheme: const ShadSonnerTheme(alignment: Alignment.bottomCenter),
+  sonnerTheme: const ShadSonnerTheme(
+    alignment: Alignment.bottomCenter,
+    padding: EdgeInsets.fromLTRB(16, 16, 16, 80),
+  ),
 );

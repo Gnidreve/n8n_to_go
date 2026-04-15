@@ -25,6 +25,7 @@ class _ExecutionDetailPageState extends State<ExecutionDetailPage> {
   late Map<String, dynamic> _execution;
   bool _loading = true;
   bool _retrying = false;
+  bool _deleting = false;
   bool _didChange = false;
   String? _loadWarning;
 
@@ -53,6 +54,43 @@ class _ExecutionDetailPageState extends State<ExecutionDetailPage> {
         _loading = false;
         _loadWarning = e.toString();
       });
+    }
+  }
+
+  Future<void> _delete() async {
+    final confirmed = await showShadDialog<bool>(
+      context: context,
+      builder: (context) => ShadDialog.alert(
+        title: const Text('Delete execution?'),
+        description: const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: Text('This will permanently delete the execution.'),
+        ),
+        actions: [
+          ShadButton.outline(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          ShadButton.destructive(
+            child: const Text('Delete'),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _deleting = true);
+    try {
+      await executions.delete(widget.executionId);
+      if (!mounted) return;
+      AppToast.success(context, 'Execution deleted');
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _deleting = false);
+      AppToast.error(context, e.toString(), title: 'Error');
     }
   }
 
@@ -90,6 +128,17 @@ class _ExecutionDetailPageState extends State<ExecutionDetailPage> {
           icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(_didChange),
         ),
+        actions: [
+          IconButton(
+            icon: _deleting
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(LucideIcons.trash2),
+            onPressed: _deleting ? null : _delete,
+          ),
+        ],
       ),
       body: SafeArea(
         top: false,

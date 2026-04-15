@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../utils/app_toast.dart';
+import 'data_table_column_detail_page.dart';
 import 'data_table_row_form_page.dart';
 
 class DataTableDetailPage extends StatefulWidget {
@@ -22,6 +24,7 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
   late Map<String, dynamic> _table;
   List<Map<String, dynamic>> _rows = const [];
   bool _loading = true;
+  bool _deleting = false;
   String? _error;
 
   @override
@@ -172,10 +175,52 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
         .toList();
   }
 
-  Future<void> _showColumnDialog(Map<String, dynamic> column) async {
-    await showShadDialog<void>(
+  Future<void> _delete() async {
+    final confirmed = await showShadDialog<bool>(
       context: context,
-      builder: (_) => _ColumnInfoDialog(column: column),
+      builder: (context) => ShadDialog.alert(
+        title: const Text('Delete table?'),
+        description: const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: Text('This will permanently delete the table and all its data.'),
+        ),
+        actions: [
+          ShadButton.outline(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          ShadButton.destructive(
+            child: const Text('Delete'),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _deleting = true);
+    try {
+      await dataTables.delete(widget.tableId);
+      if (!mounted) return;
+      AppToast.success(context, 'Table deleted');
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _deleting = false);
+      AppToast.error(context, e.toString(), title: 'Error');
+    }
+  }
+
+  Future<void> _showColumnDialog(Map<String, dynamic> column) async {
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => DataTableColumnDetailPage(
+          column: column,
+          tableId: widget.tableId,
+          allColumns: _resolvedColumns,
+        ),
+      ),
     );
   }
 
@@ -228,31 +273,89 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.plus),
-            onPressed: _resolvedColumns.isEmpty
-                ? null
-                : () async {
-                    final reload = await Navigator.of(context).push<bool>(
-                      MaterialPageRoute(
-                        builder: (_) => DataTableRowFormPage(
-                          title: 'Create row',
-                          dataTableId: widget.tableId,
-                          columns: _resolvedColumns,
-                        ),
-                      ),
-                    );
-                    if (reload == true) await _fetch();
-                  },
+            icon: _deleting
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(LucideIcons.trash2),
+            onPressed: _deleting ? null : _delete,
           ),
         ],
       ),
       body: SafeArea(
         top: false,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: labels.isEmpty
+                    ? const ShadCard(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 4),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text('No columns available'),
+                          ),
+                        ),
+                      )
+                    : ShadCard(
+                        padding: EdgeInsets.zero,
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.vertical,
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      minWidth:
+                                          MediaQuery.sizeOf(context).width - 32,
+                                    ),
+                                    child: _DataTable(
+                                      labels: labels,
+                                      rows: rows,
+                                      sourceRows: sourceRows,
+                                      resolvedColumns: _resolvedColumns,
+                                      tableId: widget.tableId,
+                                      resolveRow: _resolvedRow,
+                                      onReload: _fetch,
+                                      onColumnTap: (column) =>
+                                          _showColumnDialog(column),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            _AddRowButton(
+                              enabled: _resolvedColumns.isNotEmpty,
+                              onTap: _resolvedColumns.isEmpty
+                                  ? null
+                                  : () async {
+                                      final reload =
+                                          await Navigator.of(context)
+                                              .push<bool>(
+                                        MaterialPageRoute(
+                                          builder: (_) => DataTableRowFormPage(
+                                            title: 'Create row',
+                                            dataTableId: widget.tableId,
+                                            columns: _resolvedColumns,
+                                          ),
+                                        ),
+                                      );
+                                      if (reload == true) await _fetch();
+                                    },
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
+            ),
             Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: Text(
                 '$_rowCount rows | $_columnCount columns',
                 style: TextStyle(
@@ -261,60 +364,6 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
                 ),
               ),
             ),
-            if (labels.isEmpty)
-              const ShadCard(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('No columns available'),
-                  ),
-                ),
-              )
-            else
-              ShadCard(
-                padding: EdgeInsets.zero,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minWidth: MediaQuery.sizeOf(context).width - 64,
-                        ),
-                        child: _DataTable(
-                          labels: labels,
-                          rows: rows,
-                          sourceRows: sourceRows,
-                          resolvedColumns: _resolvedColumns,
-                          tableId: widget.tableId,
-                          resolveRow: _resolvedRow,
-                          onReload: _fetch,
-                          onColumnTap: (column) => _showColumnDialog(column),
-                        ),
-                      ),
-                    ),
-                    _AddRowButton(
-                      enabled: _resolvedColumns.isNotEmpty,
-                      onTap: _resolvedColumns.isEmpty
-                          ? null
-                          : () async {
-                              final reload = await Navigator.of(context).push<bool>(
-                                MaterialPageRoute(
-                                  builder: (_) => DataTableRowFormPage(
-                                    title: 'Create row',
-                                    dataTableId: widget.tableId,
-                                    columns: _resolvedColumns,
-                                  ),
-                                ),
-                              );
-                              if (reload == true) await _fetch();
-                            },
-                    ),
-                  ],
-                ),
-              ),
           ],
         ),
       ),
@@ -348,74 +397,6 @@ class _AddRowButton extends StatelessWidget {
               ? theme.colorScheme.mutedForeground
               : theme.colorScheme.border,
         ),
-      ),
-    );
-  }
-}
-
-class _ColumnInfoDialog extends StatelessWidget {
-  const _ColumnInfoDialog({required this.column});
-
-  final Map<String, dynamic> column;
-
-  @override
-  Widget build(BuildContext context) {
-    final name = column['name'] as String? ??
-        column['displayName'] as String? ??
-        column['id'] as String? ??
-        'Column';
-    final type = (column['type'] as String? ?? 'string').toLowerCase();
-
-    return ShadDialog(
-      title: Row(
-        children: [
-          _ColumnTypeIcon(type: type),
-          const SizedBox(width: 8),
-          Text(name),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 8),
-          _InfoRow('Name', name),
-          _InfoRow('Type', type),
-          if (column['id'] != null) _InfoRow('ID', '${column['id']}'),
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerRight,
-            child: ShadButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow(this.label, this.value);
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 60,
-            child: Text(label,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
-          ),
-          Expanded(child: Text(value)),
-        ],
       ),
     );
   }

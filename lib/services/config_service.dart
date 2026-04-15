@@ -58,6 +58,11 @@ class ConfigService {
   bool get baseUrlEditable => _baseUrlFromStorage || !hasEnvBaseUrl;
   bool get apiKeyEditable => _apiKeyFromStorage || !hasEnvApiKey;
 
+  /// Controlled by NOTIFICATIONS=true/false in .env.
+  /// Defaults to true when the key is absent.
+  bool get notificationsEnabled =>
+      (dotenv.env['NOTIFICATIONS'] ?? 'true').toLowerCase() != 'false';
+
   String get displayBaseUrl => _baseUrl ?? '';
   String get displayApiKey => _apiKey ?? '';
 
