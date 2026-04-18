@@ -101,7 +101,9 @@ class _CredentialsPageState extends State<CredentialsPage> {
           ),
         ],
       ),
-      body: _loading
+      body: SafeArea(
+        top: false,
+        child: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? ErrorView(error: _error!)
@@ -192,6 +194,7 @@ class _CredentialsPageState extends State<CredentialsPage> {
                     },
                   ),
                 ),
+      ),
     );
   }
 }

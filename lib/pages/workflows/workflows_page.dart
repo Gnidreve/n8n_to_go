@@ -77,7 +77,9 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
           ),
         ],
       ),
-      body: _loading
+      body: SafeArea(
+        top: false,
+        child: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? ErrorView(error: _error!)
@@ -157,6 +159,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
                   },
                 ),
               ),
+      ),
     );
   }
 }

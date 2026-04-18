@@ -4,6 +4,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../api/api.dart';
 import '../../utils/app_dialog.dart';
 import '../../utils/app_toast.dart';
+import '../../widgets/credential_icon.dart';
 import '../../widgets/credential_schema_form.dart';
 
 class CredentialDetailPage extends StatefulWidget {
@@ -101,7 +102,14 @@ class _CredentialDetailPageState extends State<CredentialDetailPage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: const Text('Edit Credential'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox.square(dimension: 20, child: CredentialIcon(type: _type)),
+            const SizedBox(width: 10),
+            const Text('Edit Credential'),
+          ],
+        ),
         leading: IconButton(
           icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(false),

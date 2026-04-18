@@ -122,7 +122,9 @@ class _DataTablesPageState extends State<DataTablesPage> {
           ),
         ],
       ),
-      body: _loading
+      body: SafeArea(
+        top: false,
+        child: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? ErrorView(error: _error!)
@@ -202,6 +204,7 @@ class _DataTablesPageState extends State<DataTablesPage> {
                   },
                 ),
               ),
+      ),
     );
   }
 }
