@@ -108,40 +108,38 @@ class _CredentialsPageState extends State<CredentialsPage> {
               : RefreshIndicator(
                   onRefresh: _fetch,
                   child: ListView.separated(
-                      padding: const EdgeInsets.only(top: 16, bottom: 16),
-                      itemCount: filteredItems.isEmpty ? 2 : filteredItems.length + 1,
-                      separatorBuilder: (_, index) =>
-                          index == 0 ? const SizedBox(height: 12) : const Divider(height: 1),
-                      itemBuilder: (context, i) {
-                        if (i == 0) {
-                          return Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: FilterSelect(
-                              options: _filterOptions,
-                              selectedValues: _selectedTypes,
-                              onChanged: (values) {
-                                setState(() {
-                                  _selectedTypes = values;
-                                });
-                              },
-                              searchPlaceholder: 'Search credential types',
-                              emptyLabel: 'No credential types found',
-                            ),
-                          );
-                        }
-                        if (filteredItems.isEmpty) {
-                          return const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Text('No credentials'),
-                          );
-                        }
-                        final item = Map<String, dynamic>.from(filteredItems[i - 1] as Map);
-                        final name = item['name'] as String? ?? '—';
-                        final type = item['type'] as String?;
-                        return ListTile(
-                          leading: CredentialIcon(type: type),
-                          title: Text(name),
-                          trailing: const Icon(LucideIcons.chevronRight, size: 20),
+                    padding: const EdgeInsets.all(16),
+                    itemCount: filteredItems.isEmpty ? 2 : filteredItems.length + 1,
+                    separatorBuilder: (_, index) =>
+                        index == 0 ? const SizedBox(height: 16) : const SizedBox(height: 12),
+                    itemBuilder: (context, i) {
+                      if (i == 0) {
+                        return FilterSelect(
+                          options: _filterOptions,
+                          selectedValues: _selectedTypes,
+                          onChanged: (values) => setState(() => _selectedTypes = values),
+                          searchPlaceholder: 'Search credential types',
+                          emptyLabel: 'No credential types found',
+                        );
+                      }
+                      if (filteredItems.isEmpty) {
+                        return const Text('No credentials');
+                      }
+                      final item = Map<String, dynamic>.from(filteredItems[i - 1] as Map);
+                      final name = item['name'] as String? ?? '—';
+                      final type = item['type'] as String?;
+                      final typeLabel = type == null
+                          ? '—'
+                          : (credentialTypes.entries
+                                  .where((e) => e.value == type)
+                                  .map((e) => e.key)
+                                  .firstOrNull ??
+                              type);
+                      final theme = ShadTheme.of(context);
+                      return ShadCard(
+                        padding: EdgeInsets.zero,
+                        child: InkWell(
+                          borderRadius: theme.radius,
                           onTap: () async {
                             final reload = await Navigator.of(context).push<bool>(
                               MaterialPageRoute(
@@ -150,10 +148,50 @@ class _CredentialsPageState extends State<CredentialsPage> {
                             );
                             if (reload == true) _fetch();
                           },
-                        );
-                      },
-                    ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                            child: Row(
+                              children: [
+                                SizedBox.square(
+                                  dimension: 24,
+                                  child: CredentialIcon(type: type),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        name,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        typeLabel,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: theme.colorScheme.mutedForeground,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  LucideIcons.chevronRight,
+                                  size: 18,
+                                  color: theme.colorScheme.foreground,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
+                ),
     );
   }
 }
