@@ -24,26 +24,22 @@ class ConfigService {
     _baseUrlFromStorage = storedBase != null && storedBase.isNotEmpty;
     _apiKeyFromStorage = storedKey != null && storedKey.isNotEmpty;
 
-    // Secure storage takes priority over .env
     _baseUrl = _baseUrlFromStorage
-        ? await _migrateStoredBaseUrl(
-            storedBase!,
-            envBaseUrl,
-            envBasePort,
-          )
-        : _composeBaseUrl(
-            envBaseUrl,
-            envBasePort,
-          );
-    _apiKey = _apiKeyFromStorage ? storedKey : dotenv.env['API_KEY'];
+        ? await _migrateStoredBaseUrl(storedBase!, envBaseUrl, envBasePort)
+        : null;
+    _apiKey = _apiKeyFromStorage ? storedKey : null;
   }
 
   /// Normalized base URL for API calls
   String get baseUrl => (_baseUrl ?? '').replaceAll(RegExp(r'/$'), '');
   String get apiKey => _apiKey ?? '';
 
-  bool get isConfigured =>
-      (_baseUrl?.isNotEmpty == true) && (_apiKey?.isNotEmpty == true);
+  bool get isConfigured => _baseUrlFromStorage && _apiKeyFromStorage;
+
+  // .env defaults — used to pre-fill the setup page inputs
+  String get envBaseUrl =>
+      _composeBaseUrl(dotenv.env['BASE_URL'], dotenv.env['BASE_PORT']);
+  String get envApiKey => dotenv.env['API_KEY'] ?? '';
 
   // Settings UI helpers
   bool get hasEnvBaseUrl =>

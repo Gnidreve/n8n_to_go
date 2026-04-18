@@ -3,7 +3,10 @@ import 'package:flutter/services.dart';
 
 import '../../api/api.dart';
 import '../../styles.dart';
+import '../../utils/app_dialog.dart';
 import '../../utils/app_toast.dart';
+import '../../utils/date_time_formatter.dart';
+import '../../widgets/error_view.dart';
 import '../../utils/execution_formatters.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../executions/execution_detail_page.dart';
@@ -39,9 +42,10 @@ class _ExecutionRow {
 class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
   bool _loading = true;
   bool _deleting = false;
-  String? _error;
+  Object? _error;
   Map<String, dynamic>? _workflow;
   List<_ExecutionRow> _executions = [];
+  String _activeTab = 'details';
 
   @override
   void initState() {
@@ -89,15 +93,16 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = e.toString();
+        _error = e;
       });
     }
   }
 
   Future<void> _delete() async {
-    final confirmed = await showShadDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
-      builder: (context) => ShadDialog.alert(
+      builder: (context, constraints) => ShadDialog.alert(
+        constraints: constraints,
         title: const Text('Delete workflow?'),
         description: const Padding(
           padding: EdgeInsets.only(bottom: 8),
@@ -159,22 +164,16 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-          ? Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text('Error: $_error'),
-            )
+          ? ErrorView(error: _error!)
           : Padding(
               padding: const EdgeInsets.all(16),
               child: ShadTabs<String>(
-                value: 'details',
+                value: _activeTab,
+                onChanged: (v) => setState(() => _activeTab = v),
                 tabs: [
                   ShadTab(
                     value: 'details',
                     content: ShadCard(
-                      title: const Text('Details'),
-                      description: const Text(
-                        'Workflow metadata and publication state.',
-                      ),
                       child: Column(
                         children: [
                           const SizedBox(height: 16),
@@ -189,8 +188,8 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
                             'Execution order',
                             w['settings']?['executionOrder'] ?? '—',
                           ),
-                          _Row('Created', w['createdAt'] ?? '—'),
-                          _Row('Updated', w['updatedAt'] ?? '—'),
+                          _Row('Created', formatDateTimeString(w['createdAt'])),
+                          _Row('Updated', formatDateTimeString(w['updatedAt'])),
                           if ((w['tags'] as List?)?.isNotEmpty == true)
                             _Row(
                               'Tags',
@@ -205,7 +204,11 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
                   ),
                   ShadTab(
                     value: 'executions',
-                    content: Column(
+                    content: RefreshIndicator(
+                      onRefresh: _fetch,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         if (_executions.isEmpty)
@@ -327,6 +330,8 @@ class _WorkflowDetailPageState extends State<WorkflowDetailPage> {
                             );
                           }),
                       ],
+                        ),
+                      ),
                     ),
                     child: const Text('Executions'),
                   ),
@@ -345,6 +350,7 @@ class _CopyRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final muted = ShadTheme.of(context).colorScheme.mutedForeground;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -357,19 +363,16 @@ class _CopyRow extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: ShadButton.outline(
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: value));
-                AppToast.info(context, 'Copied to clipboard');
-              },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                spacing: 8,
-                children: [
-                  Flexible(child: Text(value, overflow: TextOverflow.ellipsis)),
-                  const Icon(LucideIcons.copy, size: 14),
-                ],
-              ),
+            child: Text(value, overflow: TextOverflow.ellipsis),
+          ),
+          GestureDetector(
+            onTap: () {
+              Clipboard.setData(ClipboardData(text: value));
+              AppToast.info(context, 'Copied to clipboard');
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Icon(LucideIcons.copy, size: 14, color: muted),
             ),
           ),
         ],

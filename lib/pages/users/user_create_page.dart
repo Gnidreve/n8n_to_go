@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../utils/app_dialog.dart';
 import '../../utils/app_toast.dart';
 
 class UserCreatePage extends StatefulWidget {
@@ -24,9 +25,10 @@ class _UserCreatePageState extends State<UserCreatePage> {
   }
 
   Future<void> _showInviteDialog(String url) async {
-    await showShadDialog<void>(
+    await showAppDialog<void>(
       context: context,
-      builder: (ctx) => ShadDialog.alert(
+      builder: (ctx, constraints) => ShadDialog.alert(
+        constraints: constraints,
         title: const Text('User invited'),
         description: Padding(
           padding: const EdgeInsets.only(bottom: 8),

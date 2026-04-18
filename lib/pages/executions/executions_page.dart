@@ -3,6 +3,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
 import '../../styles.dart';
+import '../../widgets/error_view.dart';
 import '../../utils/execution_formatters.dart';
 import 'execution_detail_page.dart';
 
@@ -15,7 +16,7 @@ class ExecutionsPage extends StatefulWidget {
 
 class _ExecutionsPageState extends State<ExecutionsPage> {
   bool _loading = true;
-  String? _error;
+  Object? _error;
   List<dynamic> _items = [];
   final _searchController = TextEditingController();
   String _search = '';
@@ -65,7 +66,7 @@ class _ExecutionsPageState extends State<ExecutionsPage> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = e.toString();
+        _error = e;
       });
     }
   }
@@ -94,13 +95,7 @@ class _ExecutionsPageState extends State<ExecutionsPage> {
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-            ? SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Error: $_error',
-                  style: TextStyle(color: theme.colorScheme.destructive),
-                ),
-              )
+            ? ErrorView(error: _error!)
             : RefreshIndicator(
                 onRefresh: _fetch,
                 child: ListView.separated(

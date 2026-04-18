@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../utils/app_dialog.dart';
 import '../../utils/app_toast.dart';
 import '../../widgets/credential_schema_form.dart';
 
@@ -61,9 +62,10 @@ class _CredentialDetailPageState extends State<CredentialDetailPage> {
   }
 
   Future<void> _delete() async {
-    final confirmed = await showShadDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
-      builder: (context) => ShadDialog.alert(
+      builder: (context, constraints) => ShadDialog.alert(
+        constraints: constraints,
         title: const Text('Delete credential?'),
         description: Text('"${_name.text}" will be permanently deleted.'),
         actions: [

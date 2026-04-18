@@ -3,6 +3,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
 import '../../CREDENTIAL_TYPES.dart';
+import '../../widgets/error_view.dart';
 import '../../widgets/credential_icon.dart';
 import '../../widgets/filter_select.dart';
 import 'credential_detail_page.dart';
@@ -17,7 +18,7 @@ class CredentialsPage extends StatefulWidget {
 
 class _CredentialsPageState extends State<CredentialsPage> {
   bool _loading = true;
-  String? _error;
+  Object? _error;
   List<dynamic> _items = [];
   Set<String> _selectedTypes = <String>{};
 
@@ -38,7 +39,7 @@ class _CredentialsPageState extends State<CredentialsPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _loading = false; _error = e.toString(); });
+      setState(() { _loading = false; _error = e; });
     }
   }
 
@@ -103,16 +104,10 @@ class _CredentialsPageState extends State<CredentialsPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    'Error: $_error',
-                    style: TextStyle(
-                      color: ShadTheme.of(context).colorScheme.destructive,
-                    ),
-                  ),
-                )
-              : ListView.separated(
+              ? ErrorView(error: _error!)
+              : RefreshIndicator(
+                  onRefresh: _fetch,
+                  child: ListView.separated(
                       padding: const EdgeInsets.only(top: 16, bottom: 16),
                       itemCount: filteredItems.isEmpty ? 2 : filteredItems.length + 1,
                       separatorBuilder: (_, index) =>
@@ -158,6 +153,7 @@ class _CredentialsPageState extends State<CredentialsPage> {
                         );
                       },
                     ),
+                  ),
     );
   }
 }

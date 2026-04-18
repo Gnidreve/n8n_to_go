@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../widgets/error_view.dart';
 import 'user_create_page.dart';
 import 'user_detail_page.dart';
 
@@ -14,7 +15,7 @@ class UsersPage extends StatefulWidget {
 
 class _UsersPageState extends State<UsersPage> {
   bool _loading = true;
-  String? _error;
+  Object? _error;
   List<dynamic> _items = [];
   final _searchController = TextEditingController();
   String _search = '';
@@ -63,7 +64,7 @@ class _UsersPageState extends State<UsersPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = e;
         _loading = false;
       });
     }
@@ -96,15 +97,7 @@ class _UsersPageState extends State<UsersPage> {
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      'Error: $_error',
-                      style: TextStyle(
-                        color: ShadTheme.of(context).colorScheme.destructive,
-                      ),
-                    ),
-                  )
+                ? ErrorView(error: _error!)
                 : RefreshIndicator(
                     onRefresh: _fetch,
                     child: ListView.separated(

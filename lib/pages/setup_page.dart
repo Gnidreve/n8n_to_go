@@ -18,22 +18,16 @@ class _SetupPageState extends State<SetupPage> {
   final _baseUrl = TextEditingController();
   final _port = TextEditingController();
   final _apiKey = TextEditingController();
-  final _loginBaseUrl = TextEditingController();
-  final _loginPort = TextEditingController(text: '5678');
-  final _loginEmail = TextEditingController();
-  final _loginPassword = TextEditingController();
   bool _saving = false;
   bool _apiKeyObscured = true;
-  bool _loginPasswordObscured = true;
 
   @override
   void initState() {
     super.initState();
-    final split = splitBaseUrl(ConfigService.instance.displayBaseUrl);
+    final split = splitBaseUrl(ConfigService.instance.envBaseUrl);
     _baseUrl.text = split.url;
     _port.text = split.port;
-    _loginBaseUrl.text = split.url;
-    _loginPort.text = split.port.isEmpty ? '5678' : split.port;
+    _apiKey.text = ConfigService.instance.envApiKey;
   }
 
   @override
@@ -41,10 +35,6 @@ class _SetupPageState extends State<SetupPage> {
     _baseUrl.dispose();
     _port.dispose();
     _apiKey.dispose();
-    _loginBaseUrl.dispose();
-    _loginPort.dispose();
-    _loginEmail.dispose();
-    _loginPassword.dispose();
     super.dispose();
   }
 
@@ -166,152 +156,65 @@ class _SetupPageState extends State<SetupPage> {
                     style: theme.textTheme.muted,
                   ),
                   const SizedBox(height: 40),
-                  ShadTabs<String>(
-                    value: 'api-key',
-                    tabBarConstraints: const BoxConstraints(maxWidth: 400),
-                    contentConstraints: const BoxConstraints(maxWidth: 400),
-                    tabs: [
-                      ShadTab(
-                        value: 'login',
-                        content: ShadCard(
-                          title: const Text('Login'),
-                          description: const Text(
-                            'Direct login is in preparation and will be added in a separate flow.',
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const SizedBox(height: 16),
-                              _Field(
-                                label: 'URL',
-                                child: ShadInput(
-                                  controller: _loginBaseUrl,
-                                  placeholder: const Text(
-                                    'https://your-n8n-instance.com',
-                                  ),
-                                  leading: const Icon(LucideIcons.globe),
-                                  keyboardType: TextInputType.url,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              _Field(
-                                label: 'Port',
-                                child: ShadInput(
-                                  controller: _loginPort,
-                                  placeholder: const Text('5678'),
-                                  leading: const Icon(LucideIcons.network),
-                                  keyboardType: TextInputType.number,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              _Field(
-                                label: 'Email',
-                                child: ShadInput(
-                                  controller: _loginEmail,
-                                  placeholder: const Text('you@example.com'),
-                                  leading: const Icon(LucideIcons.mail),
-                                  keyboardType: TextInputType.emailAddress,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              _Field(
-                                label: 'Password',
-                                child: ShadInput(
-                                  controller: _loginPassword,
-                                  placeholder: const Text('Your password'),
-                                  obscureText: _loginPasswordObscured,
-                                  leading: const Icon(LucideIcons.lock),
-                                  trailing: _VisibilityToggle(
-                                    obscured: _loginPasswordObscured,
-                                    onPressed: () {
-                                      setState(() {
-                                        _loginPasswordObscured =
-                                            !_loginPasswordObscured;
-                                      });
-                                    },
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 32),
-                              const ShadButton(
-                                width: double.infinity,
-                                enabled: false,
-                                child: Text('Continue with login'),
-                              ),
-                            ],
+                  ShadCard(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 16),
+                        _Field(
+                          label: 'URL',
+                          child: ShadInput(
+                            controller: _baseUrl,
+                            placeholder: const Text(
+                              'https://your-n8n-instance.com',
+                            ),
+                            leading: const Icon(LucideIcons.globe),
+                            keyboardType: TextInputType.url,
                           ),
                         ),
-                        child: const Text('Login'),
-                      ),
-                      ShadTab(
-                        value: 'api-key',
-                        content: ShadCard(
-                          title: const Text('API Key'),
-                          description: const Text(
-                            'Connect with your base URL and n8n API key.',
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const SizedBox(height: 16),
-                              _Field(
-                                label: 'URL',
-                                child: ShadInput(
-                                  controller: _baseUrl,
-                                  placeholder: const Text(
-                                    'https://your-n8n-instance.com',
-                                  ),
-                                  leading: const Icon(LucideIcons.globe),
-                                  keyboardType: TextInputType.url,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              _Field(
-                                label: 'Port',
-                                child: ShadInput(
-                                  controller: _port,
-                                  placeholder: const Text('5678'),
-                                  leading: const Icon(LucideIcons.network),
-                                  keyboardType: TextInputType.number,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              _Field(
-                                label: 'API Key',
-                                child: ShadInput(
-                                  controller: _apiKey,
-                                  placeholder: const Text('Your n8n API key'),
-                                  obscureText: _apiKeyObscured,
-                                  leading: const Icon(LucideIcons.lock),
-                                  trailing: _VisibilityToggle(
-                                    obscured: _apiKeyObscured,
-                                    onPressed: () {
-                                      setState(() {
-                                        _apiKeyObscured = !_apiKeyObscured;
-                                      });
-                                    },
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 32),
-                              ShadButton(
-                                width: double.infinity,
-                                onPressed: _saving ? null : _save,
-                                child: _saving
-                                    ? const SizedBox.square(
-                                        dimension: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Text('Connect'),
-                              ),
-                            ],
+                        const SizedBox(height: 16),
+                        _Field(
+                          label: 'Port',
+                          child: ShadInput(
+                            controller: _port,
+                            placeholder: const Text('5678'),
+                            leading: const Icon(LucideIcons.network),
+                            keyboardType: TextInputType.number,
                           ),
                         ),
-                        child: const Text('API Key'),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        _Field(
+                          label: 'API Key',
+                          child: ShadInput(
+                            controller: _apiKey,
+                            placeholder: const Text('Your n8n API key'),
+                            obscureText: _apiKeyObscured,
+                            leading: const Icon(LucideIcons.lock),
+                            trailing: _VisibilityToggle(
+                              obscured: _apiKeyObscured,
+                              onPressed: () {
+                                setState(() {
+                                  _apiKeyObscured = !_apiKeyObscured;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        ShadButton(
+                          width: double.infinity,
+                          onPressed: _saving ? null : _save,
+                          child: _saving
+                              ? const SizedBox.square(
+                                  dimension: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Connect'),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

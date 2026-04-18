@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../widgets/error_view.dart';
 import 'workflow_detail_page.dart';
 
 class WorkflowsPage extends StatefulWidget {
@@ -13,7 +14,7 @@ class WorkflowsPage extends StatefulWidget {
 
 class _WorkflowsPageState extends State<WorkflowsPage> {
   bool _loading = true;
-  String? _error;
+  Object? _error;
   List<dynamic> _items = [];
   final _searchController = TextEditingController();
   String _search = '';
@@ -44,7 +45,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _loading = false; _error = e.toString(); });
+      setState(() { _loading = false; _error = e; });
     }
   }
 
@@ -79,16 +80,10 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    'Error: $_error',
-                    style: TextStyle(
-                      color: ShadTheme.of(context).colorScheme.destructive,
-                    ),
-                  ),
-                  )
-              : ListView.separated(
+              ? ErrorView(error: _error!)
+              : RefreshIndicator(
+                  onRefresh: _fetch,
+                  child: ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: filteredItems.length + 1,
                   separatorBuilder: (_, index) =>
@@ -161,6 +156,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
                     );
                   },
                 ),
+              ),
     );
   }
 }

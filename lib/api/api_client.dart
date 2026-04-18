@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../services/config_service.dart';
+import '../utils/api_error.dart';
 
 class ApiClient {
   const ApiClient();
@@ -107,7 +108,7 @@ class ApiClient {
 
   void _assertOk(int statusCode) {
     if (statusCode < 200 || statusCode >= 300) {
-      throw Exception('HTTP $statusCode');
+      throw ApiHttpException(statusCode);
     }
   }
 

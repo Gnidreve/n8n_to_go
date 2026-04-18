@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../utils/app_dialog.dart';
 import '../../utils/app_toast.dart';
 
 class DataTableRowFormPage extends StatefulWidget {
@@ -162,9 +163,10 @@ class _DataTableRowFormPageState extends State<DataTableRowFormPage> {
     final filter = _buildUpdateFilter();
     if (widget.initialRow == null || filter == null) return;
 
-    final confirmed = await showShadDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
-      builder: (context) => ShadDialog.alert(
+      builder: (context, constraints) => ShadDialog.alert(
+        constraints: constraints,
         title: const Text('Delete row?'),
         description: const Text('This row will be permanently deleted.'),
         actions: [

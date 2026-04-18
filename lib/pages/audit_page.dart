@@ -6,6 +6,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../api/api.dart';
 import '../utils/app_toast.dart';
+import '../widgets/error_view.dart';
 
 class AuditPage extends StatefulWidget {
   const AuditPage({super.key});
@@ -16,7 +17,7 @@ class AuditPage extends StatefulWidget {
 
 class _AuditPageState extends State<AuditPage> {
   bool _loading = true;
-  String? _error;
+  Object? _error;
   Map<String, dynamic>? _report;
 
   @override
@@ -56,7 +57,7 @@ class _AuditPageState extends State<AuditPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = e;
         _loading = false;
       });
     }
@@ -93,15 +94,7 @@ class _AuditPageState extends State<AuditPage> {
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      'Error: $_error',
-                      style: TextStyle(
-                        color: ShadTheme.of(context).colorScheme.destructive,
-                      ),
-                    ),
-                  )
+                ? ErrorView(error: _error!)
                 : ListView(
                     padding: const EdgeInsets.all(16),
                     children: [

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../utils/app_dialog.dart';
 import '../../utils/app_toast.dart';
 import 'data_table_column_detail_page.dart';
 import 'data_table_row_form_page.dart';
@@ -176,9 +177,10 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
   }
 
   Future<void> _delete() async {
-    final confirmed = await showShadDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
-      builder: (context) => ShadDialog.alert(
+      builder: (context, constraints) => ShadDialog.alert(
+        constraints: constraints,
         title: const Text('Delete table?'),
         description: const Padding(
           padding: EdgeInsets.only(bottom: 8),

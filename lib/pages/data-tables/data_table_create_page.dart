@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../utils/app_dialog.dart';
 import '../../utils/app_toast.dart';
 
 class DataTableCreatePage extends StatefulWidget {
@@ -69,11 +70,12 @@ class _DataTableCreatePageState extends State<DataTableCreatePage> {
 
   Future<void> _openColumnDialog({int? index}) async {
     final draft = index == null ? _ColumnDraft() : _columns[index];
-    final saved = await showShadDialog<bool>(
+    final saved = await showAppDialog<bool>(
       context: context,
-      builder: (context) => _ColumnDialog(
+      builder: (context, constraints) => _ColumnDialog(
         draft: draft,
         isEditing: index != null,
+        constraints: constraints,
       ),
     );
 
@@ -247,10 +249,12 @@ class _ColumnDialog extends StatefulWidget {
   const _ColumnDialog({
     required this.draft,
     required this.isEditing,
+    this.constraints,
   });
 
   final _ColumnDraft draft;
   final bool isEditing;
+  final BoxConstraints? constraints;
 
   @override
   State<_ColumnDialog> createState() => _ColumnDialogState();
@@ -290,6 +294,7 @@ class _ColumnDialogState extends State<_ColumnDialog> {
   @override
   Widget build(BuildContext context) {
     return ShadDialog(
+      constraints: widget.constraints,
       title: Text(widget.isEditing ? 'Edit column' : 'Add column'),
       child: Column(
         mainAxisSize: MainAxisSize.min,

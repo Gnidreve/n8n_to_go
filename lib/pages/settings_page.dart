@@ -5,6 +5,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../services/config_service.dart';
 import '../services/preferences_service.dart';
 import '../services/push_notifications_service.dart';
+import '../utils/app_dialog.dart';
 import '../utils/app_toast.dart';
 import '../utils/url_utils.dart';
 import 'setup_page.dart';
@@ -236,9 +237,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _logout() async {
     final navigator = Navigator.of(context);
-    final confirmed = await showShadDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
-      builder: (context) => ShadDialog.alert(
+      builder: (context, constraints) => ShadDialog.alert(
+        constraints: constraints,
         title: const Text('Log out?'),
         description: const Padding(
           padding: EdgeInsets.only(bottom: 8),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../utils/app_dialog.dart';
 import '../../utils/app_toast.dart';
 import '../../utils/execution_formatters.dart';
 
@@ -58,9 +59,10 @@ class _ExecutionDetailPageState extends State<ExecutionDetailPage> {
   }
 
   Future<void> _delete() async {
-    final confirmed = await showShadDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
-      builder: (context) => ShadDialog.alert(
+      builder: (context, constraints) => ShadDialog.alert(
+        constraints: constraints,
         title: const Text('Delete execution?'),
         description: const Padding(
           padding: EdgeInsets.only(bottom: 8),
