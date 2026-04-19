@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
+import '../../utils/date_time_formatter.dart';
 import '../../widgets/error_view.dart';
 import 'data_table_create_page.dart';
 import 'data_table_detail_page.dart';
+
 class DataTablesPage extends StatefulWidget {
   const DataTablesPage({super.key});
 
@@ -37,13 +39,18 @@ class _DataTablesPageState extends State<DataTablesPage> {
   List<dynamic> get _filteredItems {
     if (_search.isEmpty) return _items;
     return _items.where((rawItem) {
-      final name = (Map<String, dynamic>.from(rawItem as Map)['name'] as String? ?? '').toLowerCase();
+      final name =
+          (Map<String, dynamic>.from(rawItem as Map)['name'] as String? ?? '')
+              .toLowerCase();
       return name.contains(_search);
     }).toList();
   }
 
   Future<void> _fetch() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final res = await dataTables.getAll();
       if (!mounted) return;
@@ -53,7 +60,10 @@ class _DataTablesPageState extends State<DataTablesPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _loading = false; _error = e; });
+      setState(() {
+        _loading = false;
+        _error = e;
+      });
     }
   }
 
@@ -88,12 +98,51 @@ class _DataTablesPageState extends State<DataTablesPage> {
     return 0;
   }
 
-  int _rowCount(Map<String, dynamic> item) {
-    final explicitCount = item['rowCount'] ?? item['rowsCount'];
-    if (explicitCount is num) return explicitCount.toInt();
-    final rows = item['rows'] ?? item['data'] ?? item['items'];
-    if (rows is List) return rows.length;
-    return 0;
+  String _formatTimeAgo(dynamic value) {
+    final date = parseDateTime(value);
+    if (date == null) return '—';
+
+    final difference = DateTime.now().difference(date);
+    if (difference.isNegative) return 'just now';
+
+    if (difference.inMinutes < 1) return 'just now';
+    if (difference.inHours < 1) {
+      final minutes = difference.inMinutes;
+      return '$minutes ${minutes == 1 ? 'minute' : 'minutes'} ago';
+    }
+    if (difference.inDays < 1) {
+      final hours = difference.inHours;
+      return '$hours ${hours == 1 ? 'hour' : 'hours'} ago';
+    }
+    if (difference.inDays < 7) {
+      final days = difference.inDays;
+      return '$days ${days == 1 ? 'day' : 'days'} ago';
+    }
+
+    final weeks = (difference.inDays / 7).floor();
+    if (difference.inDays < 30) {
+      return '$weeks ${weeks == 1 ? 'week' : 'weeks'} ago';
+    }
+
+    final months = (difference.inDays / 30).floor();
+    if (difference.inDays < 365) {
+      return '$months ${months == 1 ? 'month' : 'months'} ago';
+    }
+
+    final years = (difference.inDays / 365).floor();
+    return '$years ${years == 1 ? 'year' : 'years'} ago';
+  }
+
+  String _metaTextFor(Map<String, dynamic> item) {
+    final columnCount = _columnCount(item);
+    final updatedAt = _formatTimeAgo(item['updatedAt']);
+    final createdAt = _formatTimeAgo(item['createdAt']);
+
+    return [
+      '$columnCount columns',
+      'Last updated $updatedAt',
+      'Created $createdAt',
+    ].join(' | ');
   }
 
   @override
@@ -111,9 +160,7 @@ class _DataTablesPageState extends State<DataTablesPage> {
             icon: const Icon(LucideIcons.plus),
             onPressed: () async {
               final reload = await Navigator.of(context).push<bool>(
-                MaterialPageRoute(
-                  builder: (_) => const DataTableCreatePage(),
-                ),
+                MaterialPageRoute(builder: (_) => const DataTableCreatePage()),
               );
               if (reload == true) {
                 await _fetch();
@@ -125,16 +172,19 @@ class _DataTablesPageState extends State<DataTablesPage> {
       body: SafeArea(
         top: false,
         child: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? ErrorView(error: _error!)
-              : RefreshIndicator(
-                  onRefresh: _fetch,
-                  child: ListView.separated(
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+            ? ErrorView(error: _error!)
+            : RefreshIndicator(
+                onRefresh: _fetch,
+                child: ListView.separated(
                   padding: const EdgeInsets.all(16),
-                  itemCount: _filteredItems.isEmpty ? 2 : _filteredItems.length + 1,
-                  separatorBuilder: (_, index) =>
-                      index == 0 ? const SizedBox(height: 16) : const SizedBox(height: 12),
+                  itemCount: _filteredItems.isEmpty
+                      ? 2
+                      : _filteredItems.length + 1,
+                  separatorBuilder: (_, index) => index == 0
+                      ? const SizedBox(height: 16)
+                      : const SizedBox(height: 12),
                   itemBuilder: (context, i) {
                     if (i == 0) {
                       return ShadInput(
@@ -143,61 +193,70 @@ class _DataTablesPageState extends State<DataTablesPage> {
                         leading: const Icon(LucideIcons.search),
                       );
                     }
-                    if (_filteredItems.isEmpty) return const Text('No data tables');
-                    final item = Map<String, dynamic>.from(_filteredItems[i - 1] as Map);
+                    if (_filteredItems.isEmpty) {
+                      return const Text('No data tables');
+                    }
+                    final item = Map<String, dynamic>.from(
+                      _filteredItems[i - 1] as Map,
+                    );
                     final name = item['name'] as String? ?? 'Data Table';
-                    final rowCount = _rowCount(item);
-                    final columnCount = _columnCount(item);
+                    final theme = ShadTheme.of(context);
 
-                    return InkWell(
-                      borderRadius: ShadTheme.of(context).radius,
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => DataTableDetailPage(
-                            tableId: '${item['id'] ?? ''}',
-                            initialTable: item,
+                    return ShadCard(
+                      padding: EdgeInsets.zero,
+                      child: InkWell(
+                        borderRadius: theme.radius,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => DataTableDetailPage(
+                              tableId: '${item['id'] ?? ''}',
+                              initialTable: item,
+                            ),
                           ),
                         ),
-                      ),
-                      child: ShadCard(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(
-                              LucideIcons.table,
-                              size: 18,
-                              color: ShadTheme.of(context).colorScheme.mutedForeground,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    name,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${rowCount > 0 ? rowCount : '—'} rows | $columnCount columns',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: ShadTheme.of(context)
-                                          .colorScheme
-                                          .mutedForeground,
-                                    ),
-                                  ),
-                                ],
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 16,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                LucideIcons.database,
+                                size: 20,
+                                color: theme.colorScheme.foreground,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      name,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _metaTextFor(item),
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color:
+                                            theme.colorScheme.mutedForeground,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                LucideIcons.chevronRight,
+                                size: 18,
+                                color: theme.colorScheme.foreground,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );

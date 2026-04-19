@@ -42,7 +42,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
 
   Future<void> _fetch() async {
     try {
-      final user = await users.get(widget.userId);
+      final user = await users.get(widget.userId, includeRole: true);
       if (!mounted) return;
       setState(() {
         _user = user;
@@ -145,11 +145,18 @@ class _UserDetailPageState extends State<UserDetailPage> {
   Widget build(BuildContext context) {
     final firstName = _user['firstName'] as String? ?? '';
     final lastName = _user['lastName'] as String? ?? '';
-    final fullName = [firstName, lastName]
-        .where((p) => p.trim().isNotEmpty)
-        .join(' ');
+    final fullName = [
+      firstName,
+      lastName,
+    ].where((p) => p.trim().isNotEmpty).join(' ');
     final email = _user['email'] as String? ?? '—';
     final role = _user['role'] as String? ?? '—';
+    final isPending = _user['isPending'];
+    final pendingStatus = switch (isPending) {
+      true => 'Yes',
+      false => 'No',
+      _ => '—',
+    };
     final id = '${_user['id'] ?? '—'}';
 
     return Scaffold(
@@ -177,25 +184,25 @@ class _UserDetailPageState extends State<UserDetailPage> {
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      'Error: $_error',
-                      style: TextStyle(
-                        color:
-                            ShadTheme.of(context).colorScheme.destructive,
-                      ),
-                    ),
-                  )
-                : ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      if (fullName.isNotEmpty) _Row('Name', fullName),
-                      _Row('Email', email),
-                      _Row('Role', role),
-                      _Row('ID', id),
-                    ],
+            ? Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Error: $_error',
+                  style: TextStyle(
+                    color: ShadTheme.of(context).colorScheme.destructive,
                   ),
+                ),
+              )
+            : ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  if (fullName.isNotEmpty) _Row('Name', fullName),
+                  _Row('Email', email),
+                  _Row('Role', role),
+                  _Row('Pending', pendingStatus),
+                  _Row('ID', id),
+                ],
+              ),
       ),
     );
   }

@@ -8,6 +8,7 @@ import 'pages/splash_page.dart';
 import 'services/preferences_service.dart';
 import 'services/push_notifications_service.dart';
 import 'styles.dart';
+import 'widgets/app_toast_host.dart';
 
 // ── Entry ─────────────────────────────────────────────────────────────────────
 
@@ -29,6 +30,9 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   static const _themeTransitionDuration = Duration(milliseconds: 200);
   static const _themeTransitionCurve = Curves.easeInOutCubic;
+  static const _sonnerHorizontalPadding = 16.0;
+  static const _sonnerBottomPadding = 16.0;
+  static const _sonnerTopSpacing = 16.0;
 
   Timer? _systemUiSyncTimer;
 
@@ -57,6 +61,11 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     }
   }
 
+  @override
+  void didChangeMetrics() {
+    setState(() {});
+  }
+
   void _onPrefsChanged() {
     setState(() {});
     _scheduleSystemUIUpdate();
@@ -69,12 +78,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       return;
     }
 
-    _systemUiSyncTimer = Timer(
-      _themeTransitionDuration ~/ 2,
-      () {
-        if (mounted) _applySystemUI();
-      },
-    );
+    _systemUiSyncTimer = Timer(_themeTransitionDuration ~/ 2, () {
+      if (mounted) _applySystemUI();
+    });
   }
 
   void _applySystemUI() {
@@ -102,18 +108,49 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     );
   }
 
+  EdgeInsets _resolveSonnerPadding() {
+    final views = WidgetsBinding.instance.platformDispatcher.views;
+    if (views.isEmpty) {
+      return const EdgeInsets.fromLTRB(
+        _sonnerHorizontalPadding,
+        _sonnerTopSpacing,
+        _sonnerHorizontalPadding,
+        _sonnerBottomPadding,
+      );
+    }
+
+    final view = views.first;
+    final topInset = view.padding.top / view.devicePixelRatio;
+    return EdgeInsets.fromLTRB(
+      _sonnerHorizontalPadding,
+      topInset + _sonnerTopSpacing,
+      _sonnerHorizontalPadding,
+      _sonnerBottomPadding,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final sonnerPadding = _resolveSonnerPadding();
+
     return ShadApp(
       navigatorKey: appNavigatorKey,
-      theme: appTheme,
-      darkTheme: appDarkTheme,
+      theme: appTheme.copyWith(
+        sonnerTheme: appTheme.sonnerTheme.copyWith(padding: sonnerPadding),
+      ),
+      darkTheme: appDarkTheme.copyWith(
+        sonnerTheme: appDarkTheme.sonnerTheme.copyWith(padding: sonnerPadding),
+      ),
+      builder: (context, child) =>
+          AppToastHost(child: child ?? const SizedBox.shrink()),
       themeMode: PreferencesService.instance.themeMode,
       themeCurve: _themeTransitionCurve,
       materialThemeBuilder: (context, theme) {
         final shadTheme = ShadTheme.of(context);
         return theme.copyWith(
           appBarTheme: theme.appBarTheme.copyWith(
+            // Temporary: slightly increase the global app bar height for review.
+            toolbarHeight: 62,
             backgroundColor: shadTheme.colorScheme.card,
             surfaceTintColor: Colors.transparent,
             elevation: 0,

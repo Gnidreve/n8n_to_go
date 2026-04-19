@@ -49,6 +49,7 @@ flutter:
       - lib/assets/credentials/
       - lib/assets/users/
       - lib/assets/splash-screem.svg
+      - lib/assets/splash-screen.dark.svg
    fonts:
       - family: InterVariable
         fonts:

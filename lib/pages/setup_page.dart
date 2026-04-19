@@ -5,10 +5,13 @@ import '../api/api.dart';
 import '../services/config_service.dart';
 import '../utils/app_toast.dart' show AppToast;
 import '../utils/url_utils.dart';
+import '../widgets/themed_svg_asset.dart';
 import 'home_page.dart';
 
 class SetupPage extends StatefulWidget {
-  const SetupPage({super.key});
+  const SetupPage({super.key, this.startupErrorMessage});
+
+  final String? startupErrorMessage;
 
   @override
   State<SetupPage> createState() => _SetupPageState();
@@ -28,6 +31,14 @@ class _SetupPageState extends State<SetupPage> {
     _baseUrl.text = split.url;
     _port.text = split.port;
     _apiKey.text = ConfigService.instance.envApiKey;
+
+    final startupErrorMessage = widget.startupErrorMessage;
+    if (startupErrorMessage != null && startupErrorMessage.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        AppToast.error(context, startupErrorMessage, title: 'Startup recovery');
+      });
+    }
   }
 
   @override
@@ -149,7 +160,11 @@ class _SetupPageState extends State<SetupPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  SvgPicture.asset('lib/assets/splash-screem.svg', height: 48),
+                  const ThemedSvgAsset(
+                    lightAsset: 'lib/assets/splash-screem.svg',
+                    darkAsset: 'lib/assets/splash-screen.dark.svg',
+                    height: 48,
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     'Connect your n8n instance',

@@ -82,22 +82,12 @@ class _DataTableRowFormPageState extends State<DataTableRowFormPage> {
   }
 
   bool _isBooleanColumn(Map<String, dynamic> column, dynamic value) {
-    final rawType = (column['type'] ??
-            column['dataType'] ??
-            column['columnType'] ??
-            '')
-        .toString()
-        .toLowerCase();
+    final rawType = _columnType(column);
     return value is bool || rawType.contains('bool');
   }
 
   bool _isNumericColumn(Map<String, dynamic> column, dynamic value) {
-    final rawType = (column['type'] ??
-            column['dataType'] ??
-            column['columnType'] ??
-            '')
-        .toString()
-        .toLowerCase();
+    final rawType = _columnType(column);
     return value is num ||
         rawType.contains('int') ||
         rawType.contains('number') ||
@@ -106,14 +96,15 @@ class _DataTableRowFormPageState extends State<DataTableRowFormPage> {
         rawType.contains('decimal');
   }
 
-  dynamic _typedValueForColumn(Map<String, dynamic> column) {
-    final key = _columnKey(column);
-    final rawType = (column['type'] ??
-            column['dataType'] ??
-            column['columnType'] ??
-            '')
+  String _columnType(Map<String, dynamic> column) {
+    return (column['type'] ?? column['dataType'] ?? column['columnType'] ?? '')
         .toString()
         .toLowerCase();
+  }
+
+  dynamic _typedValueForColumn(Map<String, dynamic> column) {
+    final key = _columnKey(column);
+    final rawType = _columnType(column);
 
     if (_boolValues.containsKey(key)) {
       return _boolValues[key] ?? false;
@@ -150,11 +141,7 @@ class _DataTableRowFormPageState extends State<DataTableRowFormPage> {
     return {
       'type': 'and',
       'filters': [
-        {
-          'columnName': 'id',
-          'condition': 'eq',
-          'value': rowId,
-        },
+        {'columnName': 'id', 'condition': 'eq', 'value': rowId},
       ],
     };
   }
@@ -210,10 +197,7 @@ class _DataTableRowFormPageState extends State<DataTableRowFormPage> {
     try {
       final payload = _payloadData();
       if (widget.initialRow == null) {
-        await dataTables.rows.insert(
-          widget.dataTableId,
-          data: [payload],
-        );
+        await dataTables.rows.insert(widget.dataTableId, data: [payload]);
       } else {
         final filter = _buildUpdateFilter();
         if (filter == null) {
@@ -228,7 +212,10 @@ class _DataTableRowFormPageState extends State<DataTableRowFormPage> {
       }
 
       if (!mounted) return;
-      AppToast.success(context, widget.initialRow == null ? 'Row created' : 'Row updated');
+      AppToast.success(
+        context,
+        widget.initialRow == null ? 'Row created' : 'Row updated',
+      );
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
@@ -283,15 +270,22 @@ class _DataTableRowFormPageState extends State<DataTableRowFormPage> {
                     final value = _valueForColumn(column);
 
                     if (_isBooleanColumn(column, value)) {
-                      return ShadCheckbox(
-                        value: _boolValues[key] ?? false,
-                        onChanged: (next) =>
-                            setState(() => _boolValues[key] = next),
+                      return Row(
+                        children: [
+                          _ColumnInputIcon(type: _columnType(column)),
+                          const SizedBox(width: 12),
+                          ShadCheckbox(
+                            value: _boolValues[key] ?? false,
+                            onChanged: (next) =>
+                                setState(() => _boolValues[key] = next),
+                          ),
+                        ],
                       );
                     }
 
                     return ShadInput(
                       controller: _controllers[key],
+                      leading: _ColumnInputIcon(type: _columnType(column)),
                       keyboardType: _isNumericColumn(column, value)
                           ? const TextInputType.numberWithOptions(decimal: true)
                           : TextInputType.text,
@@ -309,10 +303,7 @@ class _DataTableRowFormPageState extends State<DataTableRowFormPage> {
 }
 
 class _RowField extends StatelessWidget {
-  const _RowField({
-    required this.label,
-    required this.child,
-  });
+  const _RowField({required this.label, required this.child});
 
   final String label;
   final Widget child;
@@ -327,5 +318,33 @@ class _RowField extends StatelessWidget {
         child,
       ],
     );
+  }
+}
+
+class _ColumnInputIcon extends StatelessWidget {
+  const _ColumnInputIcon({required this.type});
+
+  final String type;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final icon = switch (type) {
+      final value when value.contains('bool') => LucideIcons.squareCheck,
+      final value
+          when value.contains('int') ||
+              value.contains('number') ||
+              value.contains('float') ||
+              value.contains('double') ||
+              value.contains('decimal') =>
+        LucideIcons.hash,
+      final value when value.contains('date') || value.contains('time') =>
+        LucideIcons.calendar,
+      final value when value.contains('json') || value.contains('object') =>
+        LucideIcons.braces,
+      _ => LucideIcons.type,
+    };
+
+    return Icon(icon, size: 16, color: theme.colorScheme.mutedForeground);
   }
 }

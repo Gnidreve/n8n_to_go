@@ -26,7 +26,9 @@ class _CredentialDetailPageState extends State<CredentialDetailPage> {
   @override
   void initState() {
     super.initState();
-    _name = TextEditingController(text: widget.credential['name'] as String? ?? '');
+    _name = TextEditingController(
+      text: widget.credential['name'] as String? ?? '',
+    );
   }
 
   @override
@@ -117,10 +119,22 @@ class _CredentialDetailPageState extends State<CredentialDetailPage> {
         ),
         actions: [
           IconButton(
+            icon: _deleting
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(LucideIcons.trash2),
+            onPressed: _saving || _deleting ? null : _delete,
+          ),
+          IconButton(
             icon: _saving
-                ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : const Icon(LucideIcons.check),
-            onPressed: _saving ? null : _save,
+            onPressed: _saving || _deleting ? null : _save,
           ),
         ],
       ),
@@ -142,17 +156,6 @@ class _CredentialDetailPageState extends State<CredentialDetailPage> {
             const SizedBox(height: 16),
             _Row('Created', formatDateTimeString(c['createdAt'])),
             _Row('Updated', formatDateTimeString(c['updatedAt'])),
-            const SizedBox(height: 24),
-            ShadButton.destructive(
-              width: double.infinity,
-              onPressed: _deleting ? null : _delete,
-              child: _deleting
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Delete credential'),
-            ),
           ],
         ),
       ),
@@ -175,7 +178,10 @@ class _Row extends StatelessWidget {
         children: [
           SizedBox(
             width: 100,
-            child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
           Expanded(child: Text(value)),
         ],

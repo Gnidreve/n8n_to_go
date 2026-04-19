@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-import '../styles.dart';
+import '../widgets/app_toast_host.dart';
 
 enum _AppToastType { info, success, error }
 
@@ -26,44 +26,34 @@ class AppToast {
     required String message,
     String? title,
   }) {
-    final theme = ShadTheme.of(context);
-    final sonner = ShadSonner.of(context);
-    final color = switch (type) {
-      _AppToastType.info => theme.colorScheme.foreground,
-      _AppToastType.success => kColorSuccess,
-      _AppToastType.error => theme.colorScheme.destructive,
-    };
-    final icon = switch (type) {
-      _AppToastType.info => LucideIcons.info,
-      _AppToastType.success => LucideIcons.circleCheckBig,
-      _AppToastType.error => LucideIcons.circleAlert,
-    };
+    final host = AppToastHost.maybeOf(context);
+    if (host != null) {
+      host.show(
+        AppToastPayload(
+          variant: switch (type) {
+            _AppToastType.info => AppToastVariant.info,
+            _AppToastType.success => AppToastVariant.success,
+            _AppToastType.error => AppToastVariant.error,
+          },
+          message: message,
+          title: title,
+        ),
+      );
+      return;
+    }
+
+    final sonner = ShadSonner.maybeOf(context);
+    if (sonner == null) {
+      debugPrint('AppToastHost and ShadSonner are both unavailable.');
+      return;
+    }
 
     sonner.show(
       ShadToast(
-        title: Row(
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                title ?? message,
-                style: theme.textTheme.small.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        description: title == null
-            ? null
-            : Text(
-                message,
-                style: theme.textTheme.small.copyWith(color: color),
-              ),
-        backgroundColor: theme.colorScheme.card,
+        title: Text(title ?? message),
+        description: title == null ? null : Text(message),
       ),
+      append: false,
     );
   }
 }

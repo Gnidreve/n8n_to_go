@@ -14,13 +14,24 @@ const _lightCard = Color(0xFFFFFFFF);
 const _darkBackground = Color(0xFF171717);
 const _darkCard = Color(0xFF212121);
 
-ShadInputTheme _inputTheme(Color surfaceColor) => ShadInputTheme(
-  decoration: ShadDecoration(color: surfaceColor),
+ShadInputTheme _inputTheme(Color surfaceColor) =>
+    ShadInputTheme(decoration: ShadDecoration(color: surfaceColor));
+
+ShadTextareaTheme _textareaTheme(Color surfaceColor) =>
+    ShadTextareaTheme(decoration: ShadDecoration(color: surfaceColor));
+
+ShadToastTheme _toastTheme({
+  required Color surfaceColor,
+  required Color borderColor,
+  required BorderRadius radius,
+}) => ShadToastTheme(
+  backgroundColor: surfaceColor,
+  border: ShadBorder.all(color: borderColor, width: 1),
+  radius: radius,
 );
 
-ShadTextareaTheme _textareaTheme(Color surfaceColor) => ShadTextareaTheme(
-  decoration: ShadDecoration(color: surfaceColor),
-);
+ShadDialogTheme _dialogTheme(BorderRadius radius) =>
+    ShadDialogTheme(radius: radius, removeBorderRadiusWhenTiny: false);
 
 TextStyle _inter({
   TextStyle? textStyle,
@@ -75,11 +86,23 @@ final appTheme = ShadThemeData(
   ),
   inputTheme: _inputTheme(_lightCard),
   textareaTheme: _textareaTheme(_lightCard),
+  primaryToastTheme: _toastTheme(
+    surfaceColor: _lightCard,
+    borderColor: const ShadZincColorScheme.light().border,
+    radius: BorderRadius.circular(6.72),
+  ),
+  destructiveToastTheme: _toastTheme(
+    surfaceColor: _lightCard,
+    borderColor: const ShadZincColorScheme.light().border,
+    radius: BorderRadius.circular(6.72),
+  ),
+  primaryDialogTheme: _dialogTheme(BorderRadius.circular(6.72)),
+  alertDialogTheme: _dialogTheme(BorderRadius.circular(6.72)),
   textTheme: ShadTextTheme.fromGoogleFont(_inter),
   radius: BorderRadius.circular(6.72),
   sonnerTheme: const ShadSonnerTheme(
-    alignment: Alignment.bottomCenter,
-    padding: EdgeInsets.fromLTRB(16, 16, 16, 80),
+    alignment: Alignment.topCenter,
+    padding: EdgeInsets.all(16),
   ),
 );
 
@@ -93,10 +116,22 @@ final appDarkTheme = ShadThemeData(
   ),
   inputTheme: _inputTheme(_darkCard),
   textareaTheme: _textareaTheme(_darkCard),
+  primaryToastTheme: _toastTheme(
+    surfaceColor: _darkCard,
+    borderColor: const ShadZincColorScheme.dark().border,
+    radius: BorderRadius.circular(6.72),
+  ),
+  destructiveToastTheme: _toastTheme(
+    surfaceColor: _darkCard,
+    borderColor: const ShadZincColorScheme.dark().border,
+    radius: BorderRadius.circular(6.72),
+  ),
+  primaryDialogTheme: _dialogTheme(BorderRadius.circular(6.72)),
+  alertDialogTheme: _dialogTheme(BorderRadius.circular(6.72)),
   textTheme: ShadTextTheme.fromGoogleFont(_inter),
   radius: BorderRadius.circular(6.72),
   sonnerTheme: const ShadSonnerTheme(
-    alignment: Alignment.bottomCenter,
-    padding: EdgeInsets.fromLTRB(16, 16, 16, 80),
+    alignment: Alignment.topCenter,
+    padding: EdgeInsets.all(16),
   ),
 );

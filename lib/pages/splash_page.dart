@@ -1,8 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../services/config_service.dart';
 import '../services/push_notifications_service.dart';
+import '../widgets/themed_svg_asset.dart';
 import 'home_page.dart';
 import 'setup_page.dart';
 
@@ -14,6 +16,8 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
+  static const _configLoadTimeout = Duration(seconds: 5);
+
   @override
   void initState() {
     super.initState();
@@ -21,12 +25,35 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Future<void> _init() async {
-    await ConfigService.instance.load();
+    Widget nextPage = const SetupPage();
+    String? startupErrorMessage;
+
+    try {
+      await ConfigService.instance.load().timeout(_configLoadTimeout);
+      if (ConfigService.instance.isConfigured) {
+        nextPage = const HomePage();
+      }
+    } on TimeoutException catch (error, stackTrace) {
+      debugPrint('Splash init timed out: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      startupErrorMessage =
+          'Saved app configuration could not be loaded in time. Please reconnect your n8n instance.';
+    } catch (error, stackTrace) {
+      debugPrint('Splash init failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      startupErrorMessage =
+          'Saved app configuration could not be loaded. Please reconnect your n8n instance.';
+    }
+
     if (!mounted) return;
-    final next = ConfigService.instance.isConfigured
-        ? const HomePage()
-        : const SetupPage();
-    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => next));
+
+    final next = startupErrorMessage == null
+        ? nextPage
+        : SetupPage(startupErrorMessage: startupErrorMessage);
+
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => next));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       PushNotificationsService.instance.consumePendingNotificationNavigation();
     });
@@ -36,7 +63,11 @@ class _SplashPageState extends State<SplashPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: SvgPicture.asset('lib/assets/splash-screem.svg', width: 160),
+        child: const ThemedSvgAsset(
+          lightAsset: 'lib/assets/splash-screem.svg',
+          darkAsset: 'lib/assets/splash-screen.dark.svg',
+          width: 160,
+        ),
       ),
     );
   }
