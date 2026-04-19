@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'dart:async';
 
 import 'pages/splash_page.dart';
 import 'services/preferences_service.dart';
@@ -26,17 +27,23 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
+  static const _themeTransitionDuration = Duration(milliseconds: 200);
+  static const _themeTransitionCurve = Curves.easeInOutCubic;
+
+  Timer? _systemUiSyncTimer;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     PreferencesService.instance.addListener(_onPrefsChanged);
-    _applySystemUI();
+    _scheduleSystemUIUpdate(immediate: true);
     PushNotificationsService.instance.configureNotificationNavigation();
   }
 
   @override
   void dispose() {
+    _systemUiSyncTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     PreferencesService.instance.removeListener(_onPrefsChanged);
     super.dispose();
@@ -44,11 +51,30 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
   // Also react when the OS-level brightness changes (ThemeMode.system case).
   @override
-  void didChangePlatformBrightness() => _applySystemUI();
+  void didChangePlatformBrightness() {
+    if (PreferencesService.instance.themeMode == ThemeMode.system) {
+      _scheduleSystemUIUpdate();
+    }
+  }
 
   void _onPrefsChanged() {
-    _applySystemUI();
     setState(() {});
+    _scheduleSystemUIUpdate();
+  }
+
+  void _scheduleSystemUIUpdate({bool immediate = false}) {
+    _systemUiSyncTimer?.cancel();
+    if (immediate) {
+      _applySystemUI();
+      return;
+    }
+
+    _systemUiSyncTimer = Timer(
+      _themeTransitionDuration ~/ 2,
+      () {
+        if (mounted) _applySystemUI();
+      },
+    );
   }
 
   void _applySystemUI() {
@@ -83,6 +109,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       theme: appTheme,
       darkTheme: appDarkTheme,
       themeMode: PreferencesService.instance.themeMode,
+      themeCurve: _themeTransitionCurve,
       materialThemeBuilder: (context, theme) {
         final shadTheme = ShadTheme.of(context);
         return theme.copyWith(

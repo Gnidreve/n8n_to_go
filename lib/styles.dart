@@ -14,6 +14,14 @@ const _lightCard = Color(0xFFFFFFFF);
 const _darkBackground = Color(0xFF171717);
 const _darkCard = Color(0xFF212121);
 
+ShadInputTheme _inputTheme(Color surfaceColor) => ShadInputTheme(
+  decoration: ShadDecoration(color: surfaceColor),
+);
+
+ShadTextareaTheme _textareaTheme(Color surfaceColor) => ShadTextareaTheme(
+  decoration: ShadDecoration(color: surfaceColor),
+);
+
 TextStyle _inter({
   TextStyle? textStyle,
   Color? color,
@@ -65,6 +73,8 @@ final appTheme = ShadThemeData(
     primary: _brandPrimary,
     primaryForeground: _brandPrimaryForeground,
   ),
+  inputTheme: _inputTheme(_lightCard),
+  textareaTheme: _textareaTheme(_lightCard),
   textTheme: ShadTextTheme.fromGoogleFont(_inter),
   radius: BorderRadius.circular(6.72),
   sonnerTheme: const ShadSonnerTheme(
@@ -81,6 +91,8 @@ final appDarkTheme = ShadThemeData(
     primary: _brandPrimary,
     primaryForeground: _brandPrimaryForeground,
   ),
+  inputTheme: _inputTheme(_darkCard),
+  textareaTheme: _textareaTheme(_darkCard),
   textTheme: ShadTextTheme.fromGoogleFont(_inter),
   radius: BorderRadius.circular(6.72),
   sonnerTheme: const ShadSonnerTheme(

@@ -1,6 +1,8 @@
 # n8n to go (unofficial)
 
 > An unofficial mobile client for [n8n](https://n8n.io) — browse workflows, monitor executions, and manage credentials from your Android device.
+>
+> Source-available for noncommercial use under the [PolyForm Noncommercial License 1.0.0](LICENSE). This project is not released under an OSI-approved open source license.
 
 ---
 
@@ -64,8 +66,8 @@ Push notifications are Android-first and require your own Firebase project.
 | Config resolution logic | `ConfigService.load()`                      | [`lib/services/config_service.dart`](lib/services/config_service.dart#L18) |
 | Push notifications flag | `shared_preferences`                        | [`lib/services/preferences_service.dart`](lib/services/preferences_service.dart#L43) |
 | FCM device token        | `shared_preferences`                        | [`lib/services/preferences_service.dart`](lib/services/preferences_service.dart#L50) |
-| Push setup and handlers | `PushNotificationsService`                  | [`lib/services/push_notifications_service.dart`](lib/services/push_notifications_service.dart#L52) |
-| First-launch gate       | `SplashPage._init()`                        | [`lib/pages/splash_page.dart`](lib/pages/splash_page.dart#L37)             |
+| Push setup and handlers | `PushNotificationsService`                  | [`lib/services/push_notifications_service.dart`](lib/services/push_notifications_service.dart#L38) |
+| First-launch gate       | `SplashPage._init()`                        | [`lib/pages/splash_page.dart`](lib/pages/splash_page.dart#L23)             |
 | Setup screen            | `SetupPage`                                 | [`lib/pages/setup_page.dart`](lib/pages/setup_page.dart)                   |
 
 No analytics, no external tracking, and no device token leaves your phone unless you explicitly copy it into your own n8n workflow.
@@ -104,3 +106,11 @@ No analytics, no external tracking, and no device token leaves your phone unless
 ## Disclaimer
 
 This is an **unofficial** app and is not affiliated with or endorsed by n8n GmbH.
+
+## License
+
+This project is source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE).
+
+You may use, copy, modify, and distribute this software for noncommercial purposes under that license. Commercial use is not permitted under this project's license.
+
+This repository is not released under an OSI-approved open source license.

@@ -3,6 +3,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../api/api.dart';
 import '../../utils/app_dialog.dart';
+import '../../utils/date_time_formatter.dart';
 import '../../utils/app_toast.dart';
 import '../../widgets/credential_icon.dart';
 import '../../widgets/credential_schema_form.dart';
@@ -139,8 +140,8 @@ class _CredentialDetailPageState extends State<CredentialDetailPage> {
             const SizedBox(height: 24),
             const ShadSeparator.horizontal(),
             const SizedBox(height: 16),
-            _Row('Created', c['createdAt'] as String? ?? '—'),
-            _Row('Updated', c['updatedAt'] as String? ?? '—'),
+            _Row('Created', formatDateTimeString(c['createdAt'])),
+            _Row('Updated', formatDateTimeString(c['updatedAt'])),
             const SizedBox(height: 24),
             ShadButton.destructive(
               width: double.infinity,

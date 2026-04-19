@@ -5,7 +5,6 @@ import '../../api/api.dart';
 import '../../CREDENTIAL_TYPES.dart';
 import '../../widgets/error_view.dart';
 import '../../widgets/credential_icon.dart';
-import '../../widgets/filter_select.dart';
 import 'credential_detail_page.dart';
 import 'credential_type_select_page.dart';
 
@@ -20,12 +19,22 @@ class _CredentialsPageState extends State<CredentialsPage> {
   bool _loading = true;
   Object? _error;
   List<dynamic> _items = [];
-  Set<String> _selectedTypes = <String>{};
+  final _searchController = TextEditingController();
+  String _search = '';
 
   @override
   void initState() {
     super.initState();
     _fetch();
+    _searchController.addListener(
+      () => setState(() => _search = _searchController.text.toLowerCase()),
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetch() async {
@@ -43,37 +52,26 @@ class _CredentialsPageState extends State<CredentialsPage> {
     }
   }
 
-  List<FilterSelectOption> get _filterOptions {
-    final seen = <String>{};
-    final options = <FilterSelectOption>[];
-    for (final rawItem in _items) {
-      final item = Map<String, dynamic>.from(rawItem as Map);
-      final type = item['type'] as String?;
-      if (type == null || type.isEmpty || !seen.add(type)) continue;
-      final label = credentialTypes.entries
-          .where((entry) => entry.value == type)
-          .map((entry) => entry.key)
-          .firstOrNull;
-      options.add(
-        FilterSelectOption(
-          value: type,
-          label: label ?? type,
-          leading: SizedBox.square(
-            dimension: 18,
-            child: CredentialIcon(type: type),
-          ),
-        ),
-      );
-    }
-    return options;
+  String _typeLabelFor(String? type) {
+    if (type == null || type.isEmpty) return '—';
+    return credentialTypes.entries
+            .where((entry) => entry.value == type)
+            .map((entry) => entry.key)
+            .firstOrNull ??
+        type;
   }
 
   List<dynamic> get _filteredItems {
-    if (_selectedTypes.isEmpty) return _items;
+    if (_search.isEmpty) return _items;
     return _items.where((rawItem) {
       final item = Map<String, dynamic>.from(rawItem as Map);
+      final name = (item['name'] as String? ?? '').toLowerCase();
       final type = item['type'] as String?;
-      return type != null && _selectedTypes.contains(type);
+      final typeLabel = _typeLabelFor(type).toLowerCase();
+      final normalizedType = (type ?? '').toLowerCase();
+      return name.contains(_search) ||
+          typeLabel.contains(_search) ||
+          normalizedType.contains(_search);
     }).toList();
   }
 
@@ -106,7 +104,7 @@ class _CredentialsPageState extends State<CredentialsPage> {
         child: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? ErrorView(error: _error!)
+                ? ErrorView(error: _error!)
               : RefreshIndicator(
                   onRefresh: _fetch,
                   child: ListView.separated(
@@ -116,12 +114,10 @@ class _CredentialsPageState extends State<CredentialsPage> {
                         index == 0 ? const SizedBox(height: 16) : const SizedBox(height: 12),
                     itemBuilder: (context, i) {
                       if (i == 0) {
-                        return FilterSelect(
-                          options: _filterOptions,
-                          selectedValues: _selectedTypes,
-                          onChanged: (values) => setState(() => _selectedTypes = values),
-                          searchPlaceholder: 'Search credential types',
-                          emptyLabel: 'No credential types found',
+                        return ShadInput(
+                          controller: _searchController,
+                          placeholder: const Text('Search credentials'),
+                          leading: const Icon(LucideIcons.search),
                         );
                       }
                       if (filteredItems.isEmpty) {
@@ -130,13 +126,7 @@ class _CredentialsPageState extends State<CredentialsPage> {
                       final item = Map<String, dynamic>.from(filteredItems[i - 1] as Map);
                       final name = item['name'] as String? ?? '—';
                       final type = item['type'] as String?;
-                      final typeLabel = type == null
-                          ? '—'
-                          : (credentialTypes.entries
-                                  .where((e) => e.value == type)
-                                  .map((e) => e.key)
-                                  .firstOrNull ??
-                              type);
+                      final typeLabel = _typeLabelFor(type);
                       final theme = ShadTheme.of(context);
                       return ShadCard(
                         padding: EdgeInsets.zero,

@@ -57,7 +57,7 @@ class ConfigService {
   /// Controlled by NOTIFICATIONS=true/false in .env.
   /// Defaults to true when the key is absent.
   bool get notificationsEnabled =>
-      (dotenv.env['NOTIFICATIONS'] ?? 'true').toLowerCase() != 'false';
+      dotenv.env['NOTIFICATIONS']?.toLowerCase() == 'true';
 
   String get displayBaseUrl => _baseUrl ?? '';
   String get displayApiKey => _apiKey ?? '';
