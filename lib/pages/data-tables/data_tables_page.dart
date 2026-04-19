@@ -136,13 +136,8 @@ class _DataTablesPageState extends State<DataTablesPage> {
   String _metaTextFor(Map<String, dynamic> item) {
     final columnCount = _columnCount(item);
     final updatedAt = _formatTimeAgo(item['updatedAt']);
-    final createdAt = _formatTimeAgo(item['createdAt']);
 
-    return [
-      '$columnCount columns',
-      'Last updated $updatedAt',
-      'Created $createdAt',
-    ].join(' | ');
+    return ['$columnCount columns', 'Last updated $updatedAt'].join(' | ');
   }
 
   @override

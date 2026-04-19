@@ -126,7 +126,7 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
     return _rows.map((row) {
       return labels.map((label) {
         final direct = row[label];
-        if (direct != null) return '$direct';
+        if (direct != null) return _displayCellValue(direct);
 
         final match = _columns.cast<Map<String, dynamic>?>().firstWhere(
           (column) =>
@@ -139,13 +139,21 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
         if (match != null) {
           final key = match['id'] ?? match['name'] ?? match['displayName'];
           final value = row[key];
-          if (value != null) return '$value';
+          if (value != null) return _displayCellValue(value);
         }
 
-        if (row.containsKey(label)) return '${row[label]}';
+        if (row.containsKey(label)) return _displayCellValue(row[label]);
         return '—';
       }).toList();
     }).toList();
+  }
+
+  String _displayCellValue(dynamic value) {
+    return '$value'
+        .replaceAll('\r\n', ' ')
+        .replaceAll('\n', ' ')
+        .replaceAll('\r', ' ')
+        .replaceAll('\t', ' ');
   }
 
   String _columnLabel(Map<String, dynamic> column) {
@@ -314,7 +322,6 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
                                     tableId: widget.tableId,
                                     viewportWidth:
                                         MediaQuery.sizeOf(context).width - 32,
-                                    viewportHeight: constraints.maxHeight,
                                     resolveRow: _resolvedRow,
                                     onReload: _fetch,
                                     onColumnTap: (column) =>
@@ -349,14 +356,9 @@ class _DataTableDetailPageState extends State<DataTableDetailPage> {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: Center(
-                child: Text(
-                  '$_rowCount rows | $_columnCount columns',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: ShadTheme.of(context).colorScheme.mutedForeground,
-                  ),
-                ),
+              child: _TableSummary(
+                rowCount: _rowCount,
+                columnCount: _columnCount,
               ),
             ),
           ],
@@ -417,7 +419,43 @@ class _ColumnTypeIcon extends StatelessWidget {
   }
 }
 
-class _DataTable extends StatelessWidget {
+class _TableSummary extends StatelessWidget {
+  const _TableSummary({required this.rowCount, required this.columnCount});
+
+  final int rowCount;
+  final int columnCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = TextStyle(
+      fontSize: 13,
+      color: ShadTheme.of(context).colorScheme.mutedForeground,
+    );
+
+    return Row(
+      children: [
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Text('$rowCount rows', style: style),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text('|', style: style),
+        ),
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text('$columnCount columns', style: style),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DataTable extends StatefulWidget {
   const _DataTable({
     required this.labels,
     required this.rows,
@@ -425,7 +463,6 @@ class _DataTable extends StatelessWidget {
     required this.resolvedColumns,
     required this.tableId,
     required this.viewportWidth,
-    required this.viewportHeight,
     required this.resolveRow,
     required this.onReload,
     required this.onColumnTap,
@@ -437,17 +474,56 @@ class _DataTable extends StatelessWidget {
   final List<Map<String, dynamic>> resolvedColumns;
   final String tableId;
   final double viewportWidth;
-  final double viewportHeight;
   final Map<String, dynamic> Function(Map<String, dynamic>) resolveRow;
   final Future<void> Function() onReload;
   final void Function(Map<String, dynamic>) onColumnTap;
 
+  @override
+  State<_DataTable> createState() => _DataTableState();
+}
+
+class _DataTableState extends State<_DataTable> {
   static const _cellPadding = EdgeInsets.symmetric(
     horizontal: 12,
     vertical: 10,
   );
   static const _headerIconSize = 13.0;
   static const _headerIconGap = 5.0;
+
+  final ScrollController _headerHorizontalScrollController = ScrollController();
+  final ScrollController _bodyHorizontalScrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _bodyHorizontalScrollController.addListener(_syncHeaderScroll);
+  }
+
+  @override
+  void dispose() {
+    _bodyHorizontalScrollController.removeListener(_syncHeaderScroll);
+    _headerHorizontalScrollController.dispose();
+    _bodyHorizontalScrollController.dispose();
+    super.dispose();
+  }
+
+  void _syncHeaderScroll() {
+    if (!_headerHorizontalScrollController.hasClients ||
+        !_bodyHorizontalScrollController.hasClients) {
+      return;
+    }
+
+    final offset = _bodyHorizontalScrollController.offset.clamp(
+      0.0,
+      _headerHorizontalScrollController.position.maxScrollExtent,
+    );
+
+    if (_headerHorizontalScrollController.offset == offset) {
+      return;
+    }
+
+    _headerHorizontalScrollController.jumpTo(offset);
+  }
 
   double _measureText(BuildContext context, String text, TextStyle style) {
     final painter = TextPainter(
@@ -468,12 +544,14 @@ class _DataTable extends StatelessWidget {
       color: theme.colorScheme.mutedForeground,
     );
 
-    return resolvedColumns.asMap().entries.map((entry) {
+    return widget.resolvedColumns.asMap().entries.map((entry) {
       final columnIndex = entry.key;
-      final label = labels.length > columnIndex ? labels[columnIndex] : '';
-      final values = rows.isEmpty
+      final label = widget.labels.length > columnIndex
+          ? widget.labels[columnIndex]
+          : '';
+      final values = widget.rows.isEmpty
           ? const ['—']
-          : rows.map(
+          : widget.rows.map(
               (row) => row.length > columnIndex ? row[columnIndex] : '—',
             );
 
@@ -501,34 +579,35 @@ class _DataTable extends StatelessWidget {
       0,
       (sum, width) => sum + width,
     );
-    final effectiveWidth = math.max(viewportWidth, totalTableWidth);
+    final effectiveWidth = math.max(widget.viewportWidth, totalTableWidth);
     final tableColumnWidths = <int, TableColumnWidth>{
       for (final entry in columnWidths.asMap().entries)
         entry.key: FixedColumnWidth(entry.value),
     };
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: SizedBox(
-        width: effectiveWidth,
-        height: viewportHeight,
-        child: Column(
-          children: [
-            Table(
+    return Column(
+      children: [
+        SingleChildScrollView(
+          controller: _headerHorizontalScrollController,
+          physics: const NeverScrollableScrollPhysics(),
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(
+            width: effectiveWidth,
+            child: Table(
               columnWidths: tableColumnWidths,
               border: TableBorder(bottom: BorderSide(color: borderColor)),
               children: [
                 TableRow(
-                  children: resolvedColumns.asMap().entries.map((entry) {
+                  children: widget.resolvedColumns.asMap().entries.map((entry) {
                     final col = entry.value;
-                    final label = labels.length > entry.key
-                        ? labels[entry.key]
+                    final label = widget.labels.length > entry.key
+                        ? widget.labels[entry.key]
                         : '';
                     final type = (col['type'] as String? ?? 'string')
                         .toLowerCase();
                     return GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onTap: () => onColumnTap(col),
+                      onTap: () => widget.onColumnTap(col),
                       child: Padding(
                         padding: _cellPadding,
                         child: Row(
@@ -538,6 +617,9 @@ class _DataTable extends StatelessWidget {
                             const SizedBox(width: _headerIconGap),
                             Text(
                               label,
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.visible,
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
@@ -552,74 +634,94 @@ class _DataTable extends StatelessWidget {
                 ),
               ],
             ),
-            Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: Table(
-                  columnWidths: tableColumnWidths,
-                  border: TableBorder(
-                    horizontalInside: BorderSide(
-                      color: borderColor,
-                      width: 0.5,
-                    ),
-                    bottom: BorderSide(color: borderColor, width: 0.5),
-                  ),
-                  children: [
-                    if (rows.isEmpty)
-                      TableRow(
-                        children: labels
-                            .map(
-                              (_) => Padding(
-                                padding: _cellPadding,
-                                child: const Text(
-                                  '—',
-                                  style: TextStyle(fontSize: 13),
-                                ),
-                              ),
-                            )
-                            .toList(),
+          ),
+        ),
+        Expanded(
+          child: ClipRect(
+            child: SingleChildScrollView(
+              controller: _bodyHorizontalScrollController,
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: effectiveWidth,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: Table(
+                    columnWidths: tableColumnWidths,
+                    border: TableBorder(
+                      horizontalInside: BorderSide(
+                        color: borderColor,
+                        width: 0.5,
                       ),
-                    ...rows.asMap().entries.map(
-                      (entry) => TableRow(
-                        children: entry.value
-                            .map(
-                              (value) => GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: () async {
-                                  final reload = await Navigator.of(context)
-                                      .push<bool>(
-                                        MaterialPageRoute(
-                                          builder: (_) => DataTableRowFormPage(
-                                            title: 'Edit row',
-                                            dataTableId: tableId,
-                                            columns: resolvedColumns,
-                                            initialRow: resolveRow(
-                                              sourceRows[entry.key],
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                  if (reload == true) await onReload();
-                                },
-                                child: Padding(
+                      bottom: BorderSide(color: borderColor, width: 0.5),
+                    ),
+                    children: [
+                      if (widget.rows.isEmpty)
+                        TableRow(
+                          children: widget.labels
+                              .map(
+                                (_) => Padding(
                                   padding: _cellPadding,
-                                  child: Text(
-                                    value,
-                                    style: const TextStyle(fontSize: 13),
+                                  child: const Text(
+                                    '—',
+                                    maxLines: 1,
+                                    softWrap: false,
+                                    overflow: TextOverflow.visible,
+                                    style: TextStyle(fontSize: 13),
                                   ),
                                 ),
-                              ),
-                            )
-                            .toList(),
+                              )
+                              .toList(),
+                        ),
+                      ...widget.rows.asMap().entries.map(
+                        (entry) => TableRow(
+                          children: entry.value
+                              .map(
+                                (value) => GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () async {
+                                    final reload = await Navigator.of(context)
+                                        .push<bool>(
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                DataTableRowFormPage(
+                                                  title: 'Edit row',
+                                                  dataTableId: widget.tableId,
+                                                  columns:
+                                                      widget.resolvedColumns,
+                                                  initialRow: widget.resolveRow(
+                                                    widget.sourceRows[entry
+                                                        .key],
+                                                  ),
+                                                ),
+                                          ),
+                                        );
+                                    if (reload == true) {
+                                      await widget.onReload();
+                                    }
+                                  },
+                                  child: Padding(
+                                    padding: _cellPadding,
+                                    child: Text(
+                                      value,
+                                      maxLines: 1,
+                                      softWrap: false,
+                                      overflow: TextOverflow.visible,
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }

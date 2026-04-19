@@ -4,6 +4,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 const _credentialIconsRoot = 'lib/assets/credentials';
 const _credentialFallbackIcon = 'lib/assets/appbar-logo.svg';
+const _credentialSupportedExtensions = ['svg', 'png'];
 
 class CredentialIcon extends StatefulWidget {
   const CredentialIcon({super.key, required this.type, this.size = 24});
@@ -57,43 +58,75 @@ class _CredentialIconState extends State<CredentialIcon> {
   }
 
   Future<String> _resolveAssetPath() async {
-    final lightAssetPath = _lightAssetPathForType(widget.type);
-    if (lightAssetPath == null) {
+    final lightAssetPaths = _lightAssetPathsForType(widget.type);
+    if (lightAssetPaths.isEmpty) {
       return _credentialFallbackIcon;
     }
 
     final prefersDark = _lastBrightness == Brightness.dark;
-    final darkAssetPath = _darkAssetPathForType(widget.type);
+    final darkAssetPaths = _darkAssetPathsForType(widget.type);
 
-    if (prefersDark &&
-        darkAssetPath != null &&
-        await _assetExists(darkAssetPath)) {
-      return darkAssetPath;
+    if (prefersDark) {
+      for (final darkAssetPath in darkAssetPaths) {
+        if (await _assetExists(darkAssetPath)) {
+          return darkAssetPath;
+        }
+      }
     }
 
-    if (await _assetExists(lightAssetPath)) {
-      return lightAssetPath;
+    for (final lightAssetPath in lightAssetPaths) {
+      if (await _assetExists(lightAssetPath)) {
+        return lightAssetPath;
+      }
     }
 
     return _credentialFallbackIcon;
   }
 
-  String? _lightAssetPathForType(String? type) {
+  List<String> _lightAssetPathsForType(String? type) {
     final normalizedType = type?.trim();
     if (normalizedType == null || normalizedType.isEmpty) {
-      return null;
+      return const [];
     }
 
-    return '$_credentialIconsRoot/$normalizedType.svg';
+    return _credentialSupportedExtensions
+        .map((extension) => '$_credentialIconsRoot/$normalizedType.$extension')
+        .toList(growable: false);
   }
 
-  String? _darkAssetPathForType(String? type) {
+  List<String> _darkAssetPathsForType(String? type) {
     final normalizedType = type?.trim();
     if (normalizedType == null || normalizedType.isEmpty) {
-      return null;
+      return const [];
     }
 
-    return '$_credentialIconsRoot/$normalizedType.dark.svg';
+    return _credentialSupportedExtensions
+        .map(
+          (extension) =>
+              '$_credentialIconsRoot/$normalizedType.dark.$extension',
+        )
+        .toList(growable: false);
+  }
+
+  Widget _buildIcon(String assetPath) {
+    final normalizedPath = assetPath.toLowerCase();
+
+    if (normalizedPath.endsWith('.png')) {
+      return Image.asset(
+        assetPath,
+        width: widget.size,
+        height: widget.size,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.medium,
+      );
+    }
+
+    return SvgPicture.asset(
+      assetPath,
+      width: widget.size,
+      height: widget.size,
+      fit: BoxFit.contain,
+    );
   }
 
   @override
@@ -104,10 +137,9 @@ class _CredentialIconState extends State<CredentialIcon> {
       builder: (context, snapshot) {
         final assetPath = snapshot.data ?? _credentialFallbackIcon;
 
-        return SvgPicture.asset(
-          assetPath,
-          width: widget.size,
-          height: widget.size,
+        return SizedBox.square(
+          dimension: widget.size,
+          child: _buildIcon(assetPath),
         );
       },
     );
